@@ -3,8 +3,11 @@ package main
 import "fmt"
 
 func main() {
-	fmt.Printf("\t.globl main\n")
-	fmt.Printf("main:\n")
-	fmt.Printf("\tmovl\t$%d, %%eax\n", 0)
+	var i int
+	fmt.Scan(&i)
+
+	fmt.Printf(".global mymain\n")
+	fmt.Printf("mymain:\n")
+	fmt.Printf("\tmov $%d, %%eax\n", i)
 	fmt.Printf("\tret\n")
 }

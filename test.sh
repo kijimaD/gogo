@@ -10,17 +10,14 @@ function test {
         exit
     fi
 
-    gcc -o tmp.out tmp.s || exit
-
-    # 中の値を確かめる方法がわからないので、実行できるかだけチェックする
-    # 8ccではdriver.cでやってる
-    ./tmp.out || true
-    if [[ $? -eq 0 ]];then
-        echo "ok"
-    else
-        echo "not ok"
-        exit 1
+    gcc -o tmp.out driver.c tmp.s || exit
+    result="`./tmp.out`"
+    if [ "$result" != "$expected" ]; then
+        echo "Test failed: $expected expected but got $result"
+        exit
     fi
+
+    echo "✓"
 }
 
 test 0 0
