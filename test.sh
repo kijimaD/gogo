@@ -20,8 +20,11 @@ function test {
     echo "✓"
 }
 
+# test expect expr
+
 test 0 0
 test 42 42
+test hello "hello"
 
 rm -f tmp.out tmp.s
 echo "All tests passed"
