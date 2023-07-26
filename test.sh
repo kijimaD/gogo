@@ -1,16 +1,23 @@
 #!/bin/bash
 
-function test {
-    expected="$1"
-    expr="$2"
-
-    echo "$expr" | go run main.go > tmp.s
-    if [ ! $? ]; then
-        echo "Failed to compile $expr"
+function compile {
+    echo "$1" | go run main.go > tmp.s
+    if [ $? -ne 0 ]; then
+        echo "Failed to compile $1"
         exit
     fi
 
-    gcc -o tmp.out driver.c tmp.s || exit
+    gcc -o tmp.out driver.c tmp.s
+    if [ $? -ne 0 ]; then
+        echo "GCC failed"
+        exit
+    fi
+}
+
+function test {
+    expected="$1"
+    expr="$2"
+    compile "$expr"
     result="`./tmp.out`"
     if [ "$result" != "$expected" ]; then
         echo "Test failed: $expected expected but got $result"
