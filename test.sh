@@ -7,7 +7,7 @@ function compile {
         exit
     fi
 
-    gcc -o tmp.out driver.c tmp.s
+    gcc -o tmp.out c/driver.c tmp.s
     if [ $? -ne 0 ]; then
         echo "GCC failed"
         exit
