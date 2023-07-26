@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"os"
 	"strconv"
 )
 
@@ -26,7 +28,10 @@ func compileString(s string) {
 
 func main() {
 	var str string
-	fmt.Scan(&str)
+	scanner := bufio.NewScanner(os.Stdin)
+	for scanner.Scan() {
+		str = scanner.Text()
+	}
 
 	i, ierr := strconv.Atoi(str)
 	if ierr == nil {

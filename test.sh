@@ -32,6 +32,7 @@ function test {
 test 0 0
 test 42 42
 test hello "hello"
+test "hello world" "hello world"
 
 rm -f tmp.out tmp.s
 echo "All tests passed"
