@@ -2,17 +2,18 @@ package main
 
 import (
 	"C"
-	"bufio"
 	"fmt"
+)
+import (
+	"bufio"
 	"os"
-	"strconv"
 )
 
-func compileNumber(i int) {
+func compileNumber(s string) {
 	fmt.Printf(".text\n\t")
 	fmt.Printf(".global intfn\n")
 	fmt.Printf("intfn:\n\t")
-	fmt.Printf("mov $%d, %%rax\n\t", i)
+	fmt.Printf("mov $%s, %%rax\n\t", s)
 	fmt.Printf("ret\n")
 }
 
@@ -34,11 +35,15 @@ func main() {
 		str = scanner.Text()
 	}
 
-	i, ierr := strconv.Atoi(str)
-	if ierr == nil {
-		compileNumber(i)
-	}
-	if str != "" {
-		compileString(str)
+	l := NewLexer(str)
+	switch l.ch {
+	case '"':
+		s := l.readString()
+		compileString(s)
+	default:
+		if isDigit(l.ch) {
+			s := l.readNumber()
+			compileNumber(s)
+		}
 	}
 }
