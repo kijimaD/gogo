@@ -16,7 +16,7 @@ func TestReadChar(t *testing.T) {
 }
 
 func TestReadString(t *testing.T) {
-	l := NewLexer("\"hello\" \"world\"")
+	l := NewLexer(`"hello" "world"`)
 	actual := l.readString()
 	expect := "hello"
 	assert.Equal(t, expect, actual)
@@ -30,20 +30,13 @@ func TestReadString(t *testing.T) {
 }
 
 func TestReadStringFail(t *testing.T) {
-	l := NewLexer("\"hello")
+	l := NewLexer(`"hello`)
 	actual := l.readString()
-	expect := "hello"
-	assert.Equal(t, expect, actual)
-
-	l.readChar()
-	l.readChar()
-
-	actual = l.readString()
-	expect = "world"
+	expect := `hello`
 	assert.Equal(t, expect, actual)
 }
 
-func TestReadNumber(t *testing.T) {
+func TestReadNumber1(t *testing.T) {
 	l := NewLexer("12 34")
 	actual := l.readNumber()
 	expect := "12"
@@ -53,5 +46,13 @@ func TestReadNumber(t *testing.T) {
 
 	actual = l.readNumber()
 	expect = "34"
+	assert.Equal(t, expect, actual)
+}
+
+// 暫定の挙動
+func TestReadNumber2(t *testing.T) {
+	l := NewLexer("12a")
+	actual := l.readNumber()
+	expect := "12"
 	assert.Equal(t, expect, actual)
 }
