@@ -49,7 +49,6 @@ func TestReadNumber1(t *testing.T) {
 	assert.Equal(t, expect, actual)
 }
 
-// 暫定の挙動
 func TestReadNumber2(t *testing.T) {
 	l := NewLexer("12a")
 	actual := l.readNumber()

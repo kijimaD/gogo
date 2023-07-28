@@ -14,6 +14,7 @@ func NewLexer(input string) *Lexer {
 	return l
 }
 
+// 現在の文字を読み込む
 func (l *Lexer) Next() {
 	l.skipSpace()
 
@@ -25,6 +26,7 @@ func (l *Lexer) Next() {
 		if isDigit(l.ch) {
 			s := l.readNumber()
 			compileNumber(s)
+			return // readNumberは "1+2"で1にあったとき現在値を+に進めるので、この関数の最終行でまた進めないようにreturnが必要
 		}
 	}
 
@@ -42,6 +44,7 @@ func (l *Lexer) readChar() {
 	l.readPosition += 1
 }
 
+// 文字列をすべて読んで、次の非文字列の領域に現在地を進める
 func (l *Lexer) readString() string {
 	startPos := l.position + 1
 	for {
@@ -53,6 +56,8 @@ func (l *Lexer) readString() string {
 	return l.input[startPos:l.position]
 }
 
+// 数字をすべて読んで、次の非数字の領域に現在地を進める
+// "1+2" 1で実行したとき、現在地を+にすすめる
 func (l *Lexer) readNumber() string {
 	startPos := l.position
 	for isDigit(l.ch) {
