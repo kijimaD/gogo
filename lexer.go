@@ -14,6 +14,23 @@ func NewLexer(input string) *Lexer {
 	return l
 }
 
+func (l *Lexer) Next() {
+	l.skipSpace()
+
+	switch l.ch {
+	case '"':
+		s := l.readString()
+		compileString(s)
+	default:
+		if isDigit(l.ch) {
+			s := l.readNumber()
+			compileNumber(s)
+		}
+	}
+
+	l.readChar()
+}
+
 // 次の1文字を読んでinput文字列の現在位置を進める
 func (l *Lexer) readChar() {
 	if l.readPosition >= len(l.input) {
@@ -44,7 +61,17 @@ func (l *Lexer) readNumber() string {
 	return l.input[startPos:l.position]
 }
 
+func (l *Lexer) skipSpace() {
+	for l.ch == ' ' {
+		l.readChar()
+	}
+}
+
 // 数字か判定する
 func isDigit(ch byte) bool {
 	return '0' <= ch && ch <= '9'
+}
+
+func isSpace(ch byte) bool {
+	return ch == ' '
 }

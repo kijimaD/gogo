@@ -36,14 +36,5 @@ func main() {
 	}
 
 	l := NewLexer(str)
-	switch l.ch {
-	case '"':
-		s := l.readString()
-		compileString(s)
-	default:
-		if isDigit(l.ch) {
-			s := l.readNumber()
-			compileNumber(s)
-		}
-	}
+	l.Next()
 }

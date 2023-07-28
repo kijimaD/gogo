@@ -56,3 +56,10 @@ func TestReadNumber2(t *testing.T) {
 	expect := "12"
 	assert.Equal(t, expect, actual)
 }
+
+func TestSkipSpace(t *testing.T) {
+	l := NewLexer(`   123`)
+	assert.Equal(t, uint8(' '), l.ch)
+	l.skipSpace()
+	assert.Equal(t, uint8('1'), l.ch)
+}
