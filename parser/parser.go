@@ -34,6 +34,9 @@ func New(l *lexer.Lexer) *Parser {
 		l: l,
 	}
 
+	p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
+	p.registerPrefix(token.STRING, p.parseStringLiteral)
+
 	// 2つトークンを読み込む。curTokenとpeekTokenの両方がセットされる
 	p.nextToken()
 	p.nextToken()
@@ -82,14 +85,17 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 	return stmt
 }
 
-// 式をパースする
+// 現在位置に対応したパース関数を適用してASTを返す
 func (p *Parser) parseExpression() ast.Expression {
 	prefix := p.prefixParseFns[p.curToken.Type]
 	if prefix == nil {
 		return nil
 	}
-
 	leftExp := prefix()
 
 	return leftExp
+}
+
+func (p *Parser) parseStringLiteral() ast.Expression {
+	return &ast.StringLiteral{Token: p.curToken, Value: p.curToken.Literal}
 }
