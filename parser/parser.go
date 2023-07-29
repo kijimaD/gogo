@@ -1,6 +1,9 @@
 package parser
 
 import (
+	"fmt"
+	"strconv"
+
 	"github.com/kijimaD/gogo/ast"
 	"github.com/kijimaD/gogo/lexer"
 	"github.com/kijimaD/gogo/token"
@@ -15,6 +18,8 @@ type Parser struct {
 	// 構文解析関数は中置もしくは前置のマップどちらかにある
 	prefixParseFns map[token.TokenType]prefixParseFn
 	infixParseFns  map[token.TokenType]infixParseFn
+
+	errors []string
 }
 
 type (
@@ -36,6 +41,7 @@ func New(l *lexer.Lexer) *Parser {
 
 	p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
 	p.registerPrefix(token.STRING, p.parseStringLiteral)
+	p.registerPrefix(token.INT, p.parseIntegerLiteral)
 
 	// 2つトークンを読み込む。curTokenとpeekTokenの両方がセットされる
 	p.nextToken()
@@ -70,6 +76,7 @@ func (p *Parser) registerPrefix(tokenType token.TokenType, fn prefixParseFn) {
 }
 
 // 文をパースする
+// 文は代入とか、ifの実行文とか(条件部分は式)、返り値がないもの
 func (p *Parser) parseStatement() ast.Statement {
 	switch p.curToken.Type {
 	default:
@@ -77,6 +84,7 @@ func (p *Parser) parseStatement() ast.Statement {
 	}
 }
 
+// 式文
 func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 	stmt := &ast.ExpressionStatement{Token: p.curToken}
 
@@ -85,6 +93,8 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 	return stmt
 }
 
+// 式をパースする
+// 式は返り値があるもの
 // 現在位置に対応したパース関数を適用してASTを返す
 func (p *Parser) parseExpression() ast.Expression {
 	prefix := p.prefixParseFns[p.curToken.Type]
@@ -98,4 +108,18 @@ func (p *Parser) parseExpression() ast.Expression {
 
 func (p *Parser) parseStringLiteral() ast.Expression {
 	return &ast.StringLiteral{Token: p.curToken, Value: p.curToken.Literal}
+}
+
+func (p *Parser) parseIntegerLiteral() ast.Expression {
+	lit := &ast.IntegerLiteral{Token: p.curToken}
+
+	value, err := strconv.ParseInt(p.curToken.Literal, 0, 64)
+	if err != nil {
+		msg := fmt.Sprintf("could not parse %q as integer", p.curToken.Literal)
+		p.errors = append(p.errors, msg)
+		return nil
+	}
+
+	lit.Value = value
+	return lit
 }

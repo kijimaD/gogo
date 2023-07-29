@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/kijimaD/gogo/ast"
@@ -18,12 +19,29 @@ func TestParseProgram(t *testing.T) {
 }
 
 func TestParseExpression(t *testing.T) {
-	l := lexer.NewLexer(`"hi"`)
-	p := New(l)
+	tests := []struct {
+		input  string
+		expect interface{}
+	}{
+		{
+			input:  `"hi"`,
+			expect: &ast.StringLiteral{Token: token.Token{Type: "STRING", Literal: "hi"}, Value: "hi"},
+		},
+		{
+			input:  `1`,
+			expect: &ast.IntegerLiteral{Token: token.Token{Type: "INT", Literal: "1"}, Value: 1},
+		},
+	}
 
-	actual := p.parseExpression()
-	expect := &ast.StringLiteral{Token: token.Token{Type: "STRING", Literal: "hi"}, Value: "hi"}
-	assert.Equal(t, expect, actual)
+	for i, tt := range tests {
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			l := lexer.NewLexer(tt.input)
+			p := New(l)
+			actual := p.parseExpression()
+			assert.Equal(t, tt.expect, actual)
+
+		})
+	}
 }
 
 func TestNextToken(t *testing.T) {
