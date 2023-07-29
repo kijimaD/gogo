@@ -8,8 +8,9 @@ import (
 	"bufio"
 	"os"
 
+	"github.com/kijimaD/gogo/ast"
 	"github.com/kijimaD/gogo/lexer"
-	"github.com/kijimaD/gogo/token"
+	"github.com/kijimaD/gogo/parser"
 )
 
 func compileNumber(s string) {
@@ -21,7 +22,14 @@ func compileNumber(s string) {
 }
 
 func compileString(s string) {
-
+	fmt.Printf("\t.data\n")
+	fmt.Printf(".mydata:\n\t")
+	fmt.Printf(".string \"%s\"\n\t", s)
+	fmt.Printf(".text\n\t")
+	fmt.Printf(".global stringfn\n")
+	fmt.Printf("stringfn:\n\t")
+	fmt.Printf("lea .mydata(%%rip), %%rax\n\t")
+	fmt.Printf("ret\n")
 }
 
 func printQuote(s string) {
@@ -33,24 +41,6 @@ func printQuote(s string) {
 	}
 }
 
-func emitString(tok token.Token) {
-	fmt.Printf("\t.data\n")
-	fmt.Printf(".mydata:\n\t")
-	fmt.Printf(".string ")
-	printQuote(tok.Literal)
-	fmt.Printf("\n\t")
-	fmt.Printf(".text\n\t")
-	fmt.Printf(".global stringfn\n")
-	fmt.Printf("stringfn:\n\t")
-	fmt.Printf("lea .mydata(%%rip), %%rax\n\t")
-	fmt.Printf("ret\n")
-	return
-}
-
-func compile(token.Token) {
-
-}
-
 func main() {
 	var str string
 	scanner := bufio.NewScanner(os.Stdin)
@@ -59,5 +49,14 @@ func main() {
 	}
 
 	l := lexer.NewLexer(str)
-	l.NextToken()
+	p := parser.New(l)
+	prog := p.ParseProgram()
+	stmt, _ := prog.Statements[0].(*ast.ExpressionStatement)
+	switch node := stmt.Expression.(type) {
+	case *ast.IntegerLiteral:
+		compileNumber(node.String())
+	case *ast.StringLiteral:
+		compileString(node.String())
+	}
+
 }
