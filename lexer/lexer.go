@@ -1,4 +1,8 @@
-package main
+package lexer
+
+import (
+	"github.com/kijimaD/gogo/token"
+)
 
 type Lexer struct {
 	input        string
@@ -14,23 +18,34 @@ func NewLexer(input string) *Lexer {
 	return l
 }
 
-// 現在の文字を読み込む
-func (l *Lexer) Next() {
+// 現在位置の文字を読み込む
+func (l *Lexer) NextToken() token.Token {
+	var tok token.Token
 	l.skipSpace()
 
 	switch l.ch {
 	case '"':
-		s := l.readString()
-		compileString(s)
+		tok.Type = token.STRING
+		tok.Literal = l.readString()
+		// compileString(tok.Literal) // 消す
+	case '+':
+		tok = newToken(token.PLUS, l.ch)
+	case '-':
+		tok = newToken(token.MINUS, l.ch)
+	case 0:
+		tok.Literal = ""
+		tok.Type = token.EOF
 	default:
 		if isDigit(l.ch) {
-			s := l.readNumber()
-			compileNumber(s)
-			return // readNumberは "1+2"で1にあったとき現在値を+に進めるので、この関数の最終行でまた進めないようにreturnが必要
+			tok.Literal = l.readNumber()
+			tok.Type = token.INT
+			return tok // readNumberは "1+2"で1にあったとき現在値を+に進めるので、この関数の最終行で1文字余計に進めないようにreturnが必要
 		}
 	}
 
 	l.readChar()
+
+	return tok
 }
 
 // 次の1文字を読んでinput文字列の現在位置を進める
@@ -79,4 +94,8 @@ func isDigit(ch byte) bool {
 
 func isSpace(ch byte) bool {
 	return ch == ' '
+}
+
+func newToken(tokenType token.TokenType, ch byte) token.Token {
+	return token.Token{Type: tokenType, Literal: string(ch)}
 }

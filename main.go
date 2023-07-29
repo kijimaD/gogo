@@ -7,6 +7,10 @@ import (
 import (
 	"bufio"
 	"os"
+
+	"github.com/kijimaD/gogo/ast"
+	"github.com/kijimaD/gogo/lexer"
+	"github.com/kijimaD/gogo/parser"
 )
 
 func compileNumber(s string) {
@@ -28,6 +32,15 @@ func compileString(s string) {
 	fmt.Printf("ret\n")
 }
 
+func printQuote(s string) {
+	for _, c := range s {
+		if c == '"' || c == '\\' {
+			fmt.Print("\\")
+		}
+		fmt.Printf("%c", c)
+	}
+}
+
 func main() {
 	var str string
 	scanner := bufio.NewScanner(os.Stdin)
@@ -35,6 +48,15 @@ func main() {
 		str = scanner.Text()
 	}
 
-	l := NewLexer(str)
-	l.Next()
+	l := lexer.NewLexer(str)
+	p := parser.New(l)
+	prog := p.ParseProgram()
+	stmt, _ := prog.Statements[0].(*ast.ExpressionStatement)
+	switch node := stmt.Expression.(type) {
+	case *ast.IntegerLiteral:
+		compileNumber(node.String())
+	case *ast.StringLiteral:
+		compileString(node.String())
+	}
+
 }
