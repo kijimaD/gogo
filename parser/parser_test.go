@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/kijimaD/gogo/ast"
@@ -48,7 +47,7 @@ func TestParseProgram(t *testing.T) {
 	assert.Equal(t, 2, len(result.Statements))
 }
 
-// 不正なトークンがあるとerrorsが入る
+// ILLEGALトークンがあるとerrorsが入る
 func TestParseProgramIllegal(t *testing.T) {
 	l := lexer.NewLexer(`illegal`)
 	p := New(l)
@@ -59,21 +58,34 @@ func TestParseProgramIllegal(t *testing.T) {
 
 func TestParseExpression(t *testing.T) {
 	tests := []struct {
+		name   string
 		input  string
 		expect interface{}
 	}{
 		{
+			name:   "文字列をパースする",
 			input:  `"hi"`,
 			expect: &ast.StringLiteral{Token: token.Token{Type: "STRING", Literal: "hi"}, Value: "hi"},
 		},
 		{
+			name:   "空白をスルーする(文字列)",
+			input:  `    "hi"`,
+			expect: &ast.StringLiteral{Token: token.Token{Type: "STRING", Literal: "hi"}, Value: "hi"},
+		},
+		{
+			name:   "整数をパースする",
 			input:  `1`,
+			expect: &ast.IntegerLiteral{Token: token.Token{Type: "INT", Literal: "1"}, Value: 1},
+		},
+		{
+			name:   "空白をスルーする(整数)",
+			input:  `    1`,
 			expect: &ast.IntegerLiteral{Token: token.Token{Type: "INT", Literal: "1"}, Value: 1},
 		},
 	}
 
-	for i, tt := range tests {
-		t.Run(fmt.Sprint(i), func(t *testing.T) {
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 			l := lexer.NewLexer(tt.input)
 			p := New(l)
 			actual := p.parseExpression()

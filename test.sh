@@ -47,8 +47,7 @@ test "hello world" '"hello world"'
 testfail 42a   # 引数として渡されるのは文字列としてのダブルクォートを含まない 42a
 testfail "42a" # 引数として渡されるのは文字列としてのダブルクォートを含まない 42a
 testfail '42a' # 引数として渡されるのは文字列としてのダブルクォートを含まない 42a
-# testfail '"abc'
-# testfail '0abc'
+testfail '"abc'
 
 rm -f tmp.out tmp.s
 echo "All tests passed"

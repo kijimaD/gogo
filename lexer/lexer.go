@@ -1,6 +1,8 @@
 package lexer
 
 import (
+	"fmt"
+
 	"github.com/kijimaD/gogo/token"
 )
 
@@ -26,8 +28,11 @@ func (l *Lexer) NextToken() token.Token {
 	switch l.ch {
 	case '"':
 		tok.Type = token.STRING
-		tok.Literal = l.readString()
-		// compileString(tok.Literal) // 消す
+		err, literal := l.readString()
+		if err != nil {
+			tok = newToken(token.ILLEGAL, l.ch)
+		}
+		tok.Literal = literal
 	case '+':
 		tok = newToken(token.PLUS, l.ch)
 	case '-':
@@ -62,15 +67,20 @@ func (l *Lexer) readChar() {
 }
 
 // 文字列をすべて読んで、次の非文字列の領域に現在地を進める
-func (l *Lexer) readString() string {
+func (l *Lexer) readString() (error, string) {
 	startPos := l.position + 1
 	for {
 		l.readChar()
-		if l.ch == '"' || l.ch == 0 {
+		if l.ch == '"' {
 			break
 		}
+
+		// ダブルクォートがペアにならずに終端するとエラー
+		if l.ch == 0 {
+			return fmt.Errorf("unexpected EOF"), ""
+		}
 	}
-	return l.input[startPos:l.position]
+	return nil, l.input[startPos:l.position]
 }
 
 // 数字をすべて読んで、次の非数字の領域に現在地を進める

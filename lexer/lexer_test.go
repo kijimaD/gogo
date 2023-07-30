@@ -18,23 +18,26 @@ func TestReadChar(t *testing.T) {
 
 func TestReadString(t *testing.T) {
 	l := NewLexer(`"hello" "world"`)
-	actual := l.readString()
+	_, actual := l.readString()
 	expect := "hello"
 	assert.Equal(t, expect, actual)
 
 	l.readChar()
 	l.readChar()
 
-	actual = l.readString()
+	_, actual = l.readString()
 	expect = "world"
 	assert.Equal(t, expect, actual)
 }
 
+// ダブルクォートのペアがあっていない場合はエラー
 func TestReadStringFail(t *testing.T) {
 	l := NewLexer(`"hello`)
-	actual := l.readString()
-	expect := `hello`
+	err, actual := l.readString()
+
+	expect := ``
 	assert.Equal(t, expect, actual)
+	assert.Error(t, err)
 }
 
 func TestReadNumber1(t *testing.T) {
@@ -65,8 +68,30 @@ func TestSkipSpace(t *testing.T) {
 }
 
 func TestIllegal(t *testing.T) {
-	l := NewLexer(`naked string`) // ダブルクォートがない
-	actual := l.NextToken()
-	expect := newToken(token.ILLEGAL, 'n')
-	assert.Equal(t, expect, actual)
+	tests := []struct {
+		name   string
+		input  string
+		expect token.TokenType
+	}{
+		{
+			name:   "ダブルクォートがなく数字でもない",
+			input:  `naked string`,
+			expect: token.ILLEGAL,
+		},
+		{
+			name:   "ダブルクォートのペアが合わない",
+			input:  `"not pair`,
+			expect: token.ILLEGAL,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			l := NewLexer(tt.input)
+			actual := l.NextToken()
+			if actual.Type != tt.expect {
+				t.Errorf("got %s want %s", actual, tt.expect)
+			}
+		})
+	}
 }
