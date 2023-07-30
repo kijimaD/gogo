@@ -10,12 +10,51 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// Helper ================
+
+// エラーがあった場合にテストを失敗させる
+func checkParserErrors(t *testing.T, p *Parser) {
+	t.Helper()
+	errors := p.Errors()
+	if len(errors) == 0 {
+		return
+	}
+
+	t.Errorf("parser has %d errors", len(errors))
+	for _, msg := range errors {
+		t.Errorf("parser error: %q", msg)
+	}
+	t.FailNow()
+}
+
+// エラーがない場合にテストを失敗させる
+func assertParserErrors(t *testing.T, p *Parser) {
+	t.Helper()
+	if len(p.Errors()) != 0 {
+		return
+	}
+	t.Errorf("expected parser error, but not error!")
+	t.FailNow()
+}
+
+// Test body ================
+
 func TestParseProgram(t *testing.T) {
 	l := lexer.NewLexer(`"hi" "all"`)
 	p := New(l)
 
 	result := p.ParseProgram()
+	checkParserErrors(t, p)
 	assert.Equal(t, 2, len(result.Statements))
+}
+
+// 不正なトークンがあるとerrorsが入る
+func TestParseProgramIllegal(t *testing.T) {
+	l := lexer.NewLexer(`illegal`)
+	p := New(l)
+
+	p.ParseProgram()
+	assertParserErrors(t, p)
 }
 
 func TestParseExpression(t *testing.T) {
@@ -38,6 +77,7 @@ func TestParseExpression(t *testing.T) {
 			l := lexer.NewLexer(tt.input)
 			p := New(l)
 			actual := p.parseExpression()
+			checkParserErrors(t, p)
 			assert.Equal(t, tt.expect, actual)
 
 		})

@@ -22,6 +22,10 @@ type Parser struct {
 	errors []string
 }
 
+func (p *Parser) Errors() []string {
+	return p.errors
+}
+
 type (
 	// どちらの関数もast.Expressionを返す。これが欲しいもの
 
@@ -36,7 +40,8 @@ type (
 
 func New(l *lexer.Lexer) *Parser {
 	p := &Parser{
-		l: l,
+		l:      l,
+		errors: []string{},
 	}
 
 	p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
@@ -61,6 +66,10 @@ func (p *Parser) ParseProgram() *ast.Program {
 	program.Statements = []ast.Statement{}
 
 	for p.curToken.Type != token.EOF {
+		if p.curToken.Type == token.ILLEGAL {
+			p.errors = append(p.errors, "illegal token is detected!")
+		}
+
 		stmt := p.parseStatement()
 		if stmt != nil {
 			program.Statements = append(program.Statements, stmt)

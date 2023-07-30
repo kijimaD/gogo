@@ -6,6 +6,7 @@ import (
 )
 import (
 	"bufio"
+	"log"
 	"os"
 
 	"github.com/kijimaD/gogo/ast"
@@ -51,6 +52,11 @@ func main() {
 	l := lexer.NewLexer(str)
 	p := parser.New(l)
 	prog := p.ParseProgram()
+	if len(p.Errors()) != 0 {
+		for _, err := range p.Errors() {
+			log.Fatal(err)
+		}
+	}
 	stmt, _ := prog.Statements[0].(*ast.ExpressionStatement)
 	switch node := stmt.Expression.(type) {
 	case *ast.IntegerLiteral:

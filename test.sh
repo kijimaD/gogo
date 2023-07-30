@@ -40,10 +40,15 @@ function testfail {
 
 test 0 0
 test 42 42
+test 42a '"42a"'
 test hello '"hello"'
 test "hello world" '"hello world"'
 
-# testfail 42a # まだlexerを連続実行してないので、スルーするだけでエラーにならない。次にパースすると該当するものがないのでエラーになるはず
+testfail 42a   # 引数として渡されるのは文字列としてのダブルクォートを含まない 42a
+testfail "42a" # 引数として渡されるのは文字列としてのダブルクォートを含まない 42a
+testfail '42a' # 引数として渡されるのは文字列としてのダブルクォートを含まない 42a
+# testfail '"abc'
+# testfail '0abc'
 
 rm -f tmp.out tmp.s
 echo "All tests passed"

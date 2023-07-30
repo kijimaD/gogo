@@ -3,6 +3,7 @@ package lexer
 import (
 	"testing"
 
+	"github.com/kijimaD/gogo/token"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -61,4 +62,11 @@ func TestSkipSpace(t *testing.T) {
 	assert.Equal(t, uint8(' '), l.ch)
 	l.skipSpace()
 	assert.Equal(t, uint8('1'), l.ch)
+}
+
+func TestIllegal(t *testing.T) {
+	l := NewLexer(`naked string`) // ダブルクォートがない
+	actual := l.NextToken()
+	expect := newToken(token.ILLEGAL, 'n')
+	assert.Equal(t, expect, actual)
 }

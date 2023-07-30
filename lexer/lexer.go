@@ -40,6 +40,8 @@ func (l *Lexer) NextToken() token.Token {
 			tok.Literal = l.readNumber()
 			tok.Type = token.INT
 			return tok // readNumberは "1+2"で1にあったとき現在値を+に進めるので、この関数の最終行で1文字余計に進めないようにreturnが必要
+		} else {
+			tok = newToken(token.ILLEGAL, l.ch)
 		}
 	}
 
