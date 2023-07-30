@@ -36,20 +36,69 @@ func assertParserErrors(t *testing.T, p *Parser) {
 	t.FailNow()
 }
 
+func testInfixExpression(t *testing.T, exp ast.Expression, left interface{}, operator string, right interface{}) bool {
+	t.Helper()
+	opExp, ok := exp.(*ast.InfixExpression)
+	if !ok {
+		t.Errorf("exp is not ast.InfixExpression. got=%tT(%s)", exp, exp)
+		return false
+	}
+	if opExp.Operator != operator {
+		t.Errorf("exp.Operator is not '%s'. got=%q", operator, opExp.Operator)
+		return false
+	}
+
+	return false
+}
+
 // Test body ================
 
 func TestParseProgram(t *testing.T) {
-	l := lexer.NewLexer(`"hi" "all"`)
+	l := lexer.New(`"hi" "all" 4`)
 	p := New(l)
 
 	result := p.ParseProgram()
 	checkParserErrors(t, p)
-	assert.Equal(t, 2, len(result.Statements))
+	assert.Equal(t, 3, len(result.Statements))
+}
+
+func TestParseInfixExpression(t *testing.T) {
+	infixTests := []struct {
+		input      string
+		leftValue  interface{}
+		operator   string
+		rightValue interface{}
+	}{
+		{"5 + 5", 5, "+", 5},
+	}
+
+	for _, tt := range infixTests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		program := p.ParseProgram()
+		checkParserErrors(t, p)
+
+		if len(program.Statements) != 1 {
+			t.Fatalf("program.Statements does not contain %d statements. got=%d\n",
+				1, len(program.Statements))
+		}
+
+		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+		if !ok {
+			t.Fatalf("program h.Statements[0] is not ast.ExpressionStatement. got=%T",
+				program.Statements[0])
+		}
+
+		if !testInfixExpression(t, stmt.Expression, tt.leftValue,
+			tt.operator, tt.rightValue) {
+			return
+		}
+	}
 }
 
 // ILLEGALトークンがあるとerrorsが入る
 func TestParseProgramIllegal(t *testing.T) {
-	l := lexer.NewLexer(`illegal`)
+	l := lexer.New(`illegal`)
 	p := New(l)
 
 	p.ParseProgram()
@@ -65,39 +114,59 @@ func TestParseExpression(t *testing.T) {
 		{
 			name:   "文字列をパースする",
 			input:  `"hi"`,
-			expect: &ast.StringLiteral{Token: token.Token{Type: "STRING", Literal: "hi"}, Value: "hi"},
+			expect: `hi`,
 		},
 		{
-			name:   "空白をスルーする(文字列)",
+			name:   "文字列をパースする(空白あり)",
 			input:  `    "hi"`,
-			expect: &ast.StringLiteral{Token: token.Token{Type: "STRING", Literal: "hi"}, Value: "hi"},
+			expect: `hi`,
 		},
 		{
 			name:   "整数をパースする",
 			input:  `1`,
-			expect: &ast.IntegerLiteral{Token: token.Token{Type: "INT", Literal: "1"}, Value: 1},
+			expect: `1`,
 		},
 		{
-			name:   "空白をスルーする(整数)",
+			name:   "整数をパースする(空白あり)",
 			input:  `    1`,
-			expect: &ast.IntegerLiteral{Token: token.Token{Type: "INT", Literal: "1"}, Value: 1},
+			expect: `1`,
+		},
+		{
+			name:   "+をパースする",
+			input:  `1+1`,
+			expect: "(1 + 1)",
+		},
+		{
+			name:   "+をパースする(空白あり)",
+			input:  `1 + 1`,
+			expect: "(1 + 1)",
+		},
+		{
+			name:   "+をパースする(異なる型)",
+			input:  `1 + "hello"`,
+			expect: `(1 + hello)`,
+		},
+		{
+			name:   "+をパースする(適用順序)",
+			input:  `1 + 2 + 3 + 4`,
+			expect: `(((1 + 2) + 3) + 4)`,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := lexer.NewLexer(tt.input)
+			l := lexer.New(tt.input)
 			p := New(l)
-			actual := p.parseExpression()
+			actual := p.parseExpression(LOWEST)
 			checkParserErrors(t, p)
-			assert.Equal(t, tt.expect, actual)
+			assert.Equal(t, tt.expect, actual.String())
 
 		})
 	}
 }
 
 func TestNextToken(t *testing.T) {
-	l := lexer.NewLexer(`"hello world"`)
+	l := lexer.New(`"hello world"`)
 	p := New(l)
 
 	expectCur := token.Token{Type: "STRING", Literal: "hello world"}

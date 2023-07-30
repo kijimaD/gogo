@@ -1,6 +1,10 @@
 package ast
 
-import "github.com/kijimaD/gogo/token"
+import (
+	"bytes"
+
+	"github.com/kijimaD/gogo/token"
+)
 
 type Node interface {
 	TokenLiteral() string
@@ -54,3 +58,23 @@ type IntegerLiteral struct {
 func (il *IntegerLiteral) ExpressionNode()      {}
 func (il *IntegerLiteral) TokenLiteral() string { return il.Token.Literal }
 func (il *IntegerLiteral) String() string       { return il.Token.Literal }
+
+type InfixExpression struct {
+	Token    token.Token
+	Left     Expression
+	Operator string
+	Right    Expression
+}
+
+func (ie *InfixExpression) ExpressionNode()      {}
+func (ie *InfixExpression) TokenLiteral() string { return ie.Token.Literal }
+func (ie *InfixExpression) String() string {
+	var out bytes.Buffer
+	out.WriteString("(")
+	out.WriteString(ie.Left.String())
+	out.WriteString(" " + ie.Operator + " ")
+	out.WriteString(ie.Right.String())
+	out.WriteString(")")
+
+	return out.String()
+}

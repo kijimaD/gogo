@@ -8,7 +8,7 @@ import (
 )
 
 func TestReadChar(t *testing.T) {
-	l := NewLexer("hi")
+	l := New("hi")
 	assert.Equal(t, uint8('h'), l.ch)
 	l.readChar()
 	assert.Equal(t, uint8('i'), l.ch)
@@ -17,7 +17,7 @@ func TestReadChar(t *testing.T) {
 }
 
 func TestReadString(t *testing.T) {
-	l := NewLexer(`"hello" "world"`)
+	l := New(`"hello" "world"`)
 	_, actual := l.readString()
 	expect := "hello"
 	assert.Equal(t, expect, actual)
@@ -32,7 +32,7 @@ func TestReadString(t *testing.T) {
 
 // ダブルクォートのペアがあっていない場合はエラー
 func TestReadStringFail(t *testing.T) {
-	l := NewLexer(`"hello`)
+	l := New(`"hello`)
 	err, actual := l.readString()
 
 	expect := ``
@@ -41,7 +41,7 @@ func TestReadStringFail(t *testing.T) {
 }
 
 func TestReadNumber1(t *testing.T) {
-	l := NewLexer("12 34")
+	l := New("12 34")
 	actual := l.readNumber()
 	expect := "12"
 	assert.Equal(t, expect, actual)
@@ -54,14 +54,14 @@ func TestReadNumber1(t *testing.T) {
 }
 
 func TestReadNumber2(t *testing.T) {
-	l := NewLexer("12a")
+	l := New("12a")
 	actual := l.readNumber()
 	expect := "12"
 	assert.Equal(t, expect, actual)
 }
 
 func TestSkipSpace(t *testing.T) {
-	l := NewLexer(`   123`)
+	l := New(`   123`)
 	assert.Equal(t, uint8(' '), l.ch)
 	l.skipSpace()
 	assert.Equal(t, uint8('1'), l.ch)
@@ -87,7 +87,7 @@ func TestIllegal(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := NewLexer(tt.input)
+			l := New(tt.input)
 			actual := l.NextToken()
 			if actual.Type != tt.expect {
 				t.Errorf("got %s want %s", actual, tt.expect)

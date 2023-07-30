@@ -38,6 +38,16 @@ type (
 	infixParseFn func(ast.Expression) ast.Expression
 )
 
+const (
+	_int = iota
+	LOWEST
+	SUM
+)
+
+var precedences = map[token.TokenType]int{
+	token.PLUS: SUM,
+}
+
 func New(l *lexer.Lexer) *Parser {
 	p := &Parser{
 		l:      l,
@@ -47,6 +57,9 @@ func New(l *lexer.Lexer) *Parser {
 	p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
 	p.registerPrefix(token.STRING, p.parseStringLiteral)
 	p.registerPrefix(token.INT, p.parseIntegerLiteral)
+
+	p.infixParseFns = make(map[token.TokenType]infixParseFn)
+	p.registerInfix(token.PLUS, p.parseInfixExpression)
 
 	// 2つトークンを読み込む。curTokenとpeekTokenの両方がセットされる
 	p.nextToken()
@@ -59,6 +72,21 @@ func New(l *lexer.Lexer) *Parser {
 func (p *Parser) nextToken() {
 	p.curToken = p.peekToken
 	p.peekToken = p.l.NextToken()
+}
+
+func (p *Parser) peekPrecedence() int {
+	if p, ok := precedences[p.peekToken.Type]; ok {
+		return p
+	}
+
+	return LOWEST
+}
+
+func (p *Parser) curPrecedence() int {
+	if p, ok := precedences[p.curToken.Type]; ok {
+		return p
+	}
+	return LOWEST
 }
 
 func (p *Parser) ParseProgram() *ast.Program {
@@ -84,6 +112,10 @@ func (p *Parser) registerPrefix(tokenType token.TokenType, fn prefixParseFn) {
 	p.prefixParseFns[tokenType] = fn
 }
 
+func (p *Parser) registerInfix(tokenType token.TokenType, fn infixParseFn) {
+	p.infixParseFns[tokenType] = fn
+}
+
 // 文をパースする
 // 文は代入とか、ifの実行文とか(条件部分は式)、返り値がないもの
 func (p *Parser) parseStatement() ast.Statement {
@@ -97,7 +129,7 @@ func (p *Parser) parseStatement() ast.Statement {
 func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 	stmt := &ast.ExpressionStatement{Token: p.curToken}
 
-	stmt.Expression = p.parseExpression()
+	stmt.Expression = p.parseExpression(LOWEST)
 
 	return stmt
 }
@@ -105,12 +137,22 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 // 式をパースする
 // 式は返り値があるもの
 // 現在位置に対応したパース関数を適用してASTを返す
-func (p *Parser) parseExpression() ast.Expression {
+func (p *Parser) parseExpression(precedence int) ast.Expression {
 	prefix := p.prefixParseFns[p.curToken.Type]
 	if prefix == nil {
 		return nil
 	}
 	leftExp := prefix()
+
+	// 次のトークンの優先度が高く中置構文に対応してるなら、中置構文としてパースする
+	for precedence < p.peekPrecedence() {
+		infix := p.infixParseFns[p.peekToken.Type]
+		if infix == nil {
+			return leftExp
+		}
+		p.nextToken()            // 中置関数の演算子のトークンに移動
+		leftExp = infix(leftExp) // 中置関数の演算子をパースする
+	}
 
 	return leftExp
 }
@@ -131,4 +173,18 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 
 	lit.Value = value
 	return lit
+}
+
+func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
+	expression := &ast.InfixExpression{
+		Token:    p.curToken, // 現在のトークンは中置演算子の演算子
+		Operator: p.curToken.Literal,
+		Left:     left,
+	}
+
+	precedence := p.curPrecedence()
+	p.nextToken() // 中置演算子の右の引数に進む
+	expression.Right = p.parseExpression(precedence)
+
+	return expression
 }

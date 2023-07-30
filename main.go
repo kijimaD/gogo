@@ -49,7 +49,7 @@ func main() {
 		str = scanner.Text()
 	}
 
-	l := lexer.NewLexer(str)
+	l := lexer.New(str)
 	p := parser.New(l)
 	prog := p.ParseProgram()
 	if len(p.Errors()) != 0 {

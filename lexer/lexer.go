@@ -14,7 +14,7 @@ type Lexer struct {
 }
 
 // ソースコード文字列を引数に取り、初期化する
-func NewLexer(input string) *Lexer {
+func New(input string) *Lexer {
 	l := &Lexer{input: input}
 	l.readChar()
 	return l
