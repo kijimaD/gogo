@@ -43,11 +43,19 @@ test 42 42
 test 42a '"42a"'
 test hello '"hello"'
 test "hello world" '"hello world"'
+test 3 '1+2'
+test 3 '1 + 2'
+test 3 '1+ 2'
+test 10 '1+2+3+4'
+test 4 '1+2-3+4'
+test 2 '5 - 3' # 失敗する
 
 testfail 42a   # 引数として渡されるのは文字列としてのダブルクォートを含まない 42a
 testfail "42a" # 引数として渡されるのは文字列としてのダブルクォートを含まない 42a
 testfail '42a' # 引数として渡されるのは文字列としてのダブルクォートを含まない 42a
 testfail '"abc'
+testfail '1+'
+testfail '1+"abc"'
 
 rm -f tmp.out tmp.s
 echo "All tests passed"

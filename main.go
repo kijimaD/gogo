@@ -14,18 +14,21 @@ import (
 	"github.com/kijimaD/gogo/parser"
 )
 
-func compileNumber(s string) {
-	fmt.Printf(".text\n\t")
-	fmt.Printf(".global intfn\n")
-	fmt.Printf("intfn:\n\t")
-	fmt.Printf("mov $%s, %%rax\n\t", s)
-	fmt.Printf("ret\n")
+func emitIntexpr(e ast.Expression) {
+	switch ast := e.(type) {
+	case *ast.IntegerLiteral:
+		fmt.Printf("mov $%s, %%eax\n\t", ast.String())
+	case *ast.InfixExpression:
+		emitBinop(*ast)
+	default:
+		log.Fatal("not cover type:")
+	}
 }
 
-func compileString(s string) {
+func emitString(e ast.StringLiteral) {
 	fmt.Printf("\t.data\n")
 	fmt.Printf(".mydata:\n\t")
-	fmt.Printf(".string \"%s\"\n\t", s)
+	fmt.Printf(".string \"%s\"\n\t", e.String())
 	fmt.Printf(".text\n\t")
 	fmt.Printf(".global stringfn\n")
 	fmt.Printf("stringfn:\n\t")
@@ -33,12 +36,34 @@ func compileString(s string) {
 	fmt.Printf("ret\n")
 }
 
-func printQuote(s string) {
-	for _, c := range s {
-		if c == '"' || c == '\\' {
-			fmt.Print("\\")
-		}
-		fmt.Printf("%c", c)
+func emitBinop(i ast.InfixExpression) {
+	var op string
+	switch i.Operator {
+	case "+":
+		op = "add"
+	case "-":
+		op = "sub"
+	default:
+		log.Fatal("invalid operand:", op)
+	}
+	emitIntexpr(i.Left)
+	fmt.Printf("push %%rax\n\t")
+	emitIntexpr(i.Right)
+
+	fmt.Printf("pop %%rbx\n\t")
+	fmt.Printf("%s %%ebx, %%eax\n\t", op)
+}
+
+func compile(e ast.Expression) {
+	switch ast := e.(type) {
+	case *ast.StringLiteral:
+		emitString(*ast)
+	default:
+		fmt.Printf(".text\n\t")
+		fmt.Printf(".global intfn\n")
+		fmt.Printf("intfn:\n\t")
+		emitIntexpr(e)
+		fmt.Printf("ret\n")
 	}
 }
 
@@ -58,11 +83,6 @@ func main() {
 		}
 	}
 	stmt, _ := prog.Statements[0].(*ast.ExpressionStatement)
-	switch node := stmt.Expression.(type) {
-	case *ast.IntegerLiteral:
-		compileNumber(node.String())
-	case *ast.StringLiteral:
-		compileString(node.String())
-	}
-
+	exp := stmt.Expression
+	compile(exp)
 }

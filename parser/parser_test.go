@@ -153,8 +153,8 @@ func TestParseExpression(t *testing.T) {
 		},
 		{
 			name:   "-をパースする",
-			input:  `1-1`,
-			expect: "(1 - 1)",
+			input:  `3-1`,
+			expect: "(3 - 1)",
 		},
 		{
 			name:   "-をパースする(適用順序)",
