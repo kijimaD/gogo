@@ -46,9 +46,9 @@ func emitBinop(i ast.InfixExpression) {
 	default:
 		log.Fatal("invalid operand:", op)
 	}
-	emitIntexpr(i.Left)
-	fmt.Printf("push %%rax\n\t")
 	emitIntexpr(i.Right)
+	fmt.Printf("push %%rax\n\t")
+	emitIntexpr(i.Left)
 
 	fmt.Printf("pop %%rbx\n\t")
 	fmt.Printf("%s %%ebx, %%eax\n\t", op)
