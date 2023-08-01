@@ -11,8 +11,9 @@ const (
 	ILLEGAL = "ILLEGAL"
 	EOF     = "EOF"
 
-	PLUS  = "+"
-	MINUS = "-"
+	PLUS     = "+"
+	MINUS    = "-"
+	ASTERISK = "*"
 
 	INT    = "INT"
 	STRING = "STRING"

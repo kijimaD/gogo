@@ -43,6 +43,8 @@ func emitBinop(i ast.InfixExpression) {
 		op = "add"
 	case "-":
 		op = "sub"
+	case "*":
+		op = "imul"
 	default:
 		log.Fatal("invalid operand:", op)
 	}
