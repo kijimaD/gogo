@@ -45,15 +45,27 @@ func emitBinop(i ast.InfixExpression) {
 		op = "sub"
 	case "*":
 		op = "imul"
+	case "/":
+		op = ""
 	default:
 		log.Fatal("invalid operand:", op)
 	}
-	emitIntexpr(i.Right)
-	fmt.Printf("push %%rax\n\t")
-	emitIntexpr(i.Left)
 
-	fmt.Printf("pop %%rbx\n\t")
-	fmt.Printf("%s %%ebx, %%eax\n\t", op)
+	if i.Operator == "/" {
+		emitIntexpr(i.Left)
+		fmt.Printf("push %%rax\n\t")
+		emitIntexpr(i.Right)
+		fmt.Printf("mov %%eax, %%ebx\n\t")
+		fmt.Printf("pop %%rax\n\t")
+		fmt.Printf("mov $0, %%edx\n\t")
+		fmt.Printf("idiv %%ebx\n\t")
+	} else {
+		emitIntexpr(i.Right)
+		fmt.Printf("push %%rax\n\t")
+		emitIntexpr(i.Left)
+		fmt.Printf("pop %%rbx\n\t")
+		fmt.Printf("%s %%ebx, %%eax\n\t", op)
+	}
 }
 
 func compile(e ast.Expression) {

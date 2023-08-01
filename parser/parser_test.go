@@ -171,6 +171,16 @@ func TestParseExpression(t *testing.T) {
 			input:  `1+2*3+4`,
 			expect: "((1 + (2 * 3)) + 4)",
 		},
+		{
+			name:   "/をパースする",
+			input:  `4/2`,
+			expect: "(4 / 2)",
+		},
+		{
+			name:   "/をパースする(適用順序)",
+			input:  `3+4/2+3`,
+			expect: "((3 + (4 / 2)) + 3)",
+		},
 	}
 
 	for _, tt := range tests {

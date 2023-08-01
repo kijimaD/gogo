@@ -14,6 +14,7 @@ const (
 	PLUS     = "+"
 	MINUS    = "-"
 	ASTERISK = "*"
+	SLASH    = "/"
 
 	INT    = "INT"
 	STRING = "STRING"
