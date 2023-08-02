@@ -141,10 +141,9 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 	return stmt
 }
 
-// 式をパースする
-// 式は返り値があるもの
-// 現在位置に対応したパース関数を適用してASTを返す
+// 式をパースする。現在位置に対応したパース関数を適用してASTを返す
 func (p *Parser) parseExpression(precedence int) ast.Expression {
+	// 前置構文
 	prefix := p.prefixParseFns[p.curToken.Type]
 	if prefix == nil {
 		return nil
@@ -190,8 +189,8 @@ func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 	}
 
 	precedence := p.curPrecedence()
-	p.nextToken() // 中置演算子の右の引数に進む
-	expression.Right = p.parseExpression(precedence)
+	p.nextToken()                                    // 中置演算子の右の引数に進む
+	expression.Right = p.parseExpression(precedence) // 右側を評価する
 
 	return expression
 }
