@@ -95,3 +95,42 @@ func TestIllegal(t *testing.T) {
 		})
 	}
 }
+
+func TestNextToken(t *testing.T) {
+	input := `1 + 2;
+3 * 4;
+5 / 6;
+7 - 8;
+"hello";
+`
+
+	tests := []struct {
+		expectedType    token.TokenType
+		expectedLiteral string
+	}{
+		{token.INT, "1"},
+		{token.PLUS, "+"},
+		{token.INT, "2"},
+		{token.SEMICOLON, ";"},
+		{token.INT, "3"},
+		{token.ASTERISK, "*"},
+		{token.INT, "4"},
+		{token.SEMICOLON, ";"},
+		{token.INT, "5"},
+		{token.SLASH, "/"},
+		{token.INT, "6"},
+		{token.SEMICOLON, ";"},
+		{token.INT, "7"},
+		{token.MINUS, "-"},
+		{token.INT, "8"},
+		{token.SEMICOLON, ";"},
+		{token.STRING, "hello"},
+	}
+
+	l := New(input)
+	for _, tt := range tests {
+		tok := l.NextToken()
+
+		assert.Equal(t, tt.expectedType, tok.Type)
+	}
+}

@@ -16,6 +16,7 @@ const (
 	ASTERISK = "*"
 	SLASH    = "/"
 
-	INT    = "INT"
-	STRING = "STRING"
+	INT       = "INT"
+	STRING    = "STRING"
+	SEMICOLON = ";"
 )

@@ -41,7 +41,10 @@ func (l *Lexer) NextToken() token.Token {
 		tok = newToken(token.ASTERISK, l.ch)
 	case '/':
 		tok = newToken(token.SLASH, l.ch)
+	case ';':
+		tok = newToken(token.SEMICOLON, l.ch)
 	case 0:
+		// 終端文字
 		tok.Literal = ""
 		tok.Type = token.EOF
 	default:
@@ -98,7 +101,7 @@ func (l *Lexer) readNumber() string {
 }
 
 func (l *Lexer) skipSpace() {
-	for l.ch == ' ' {
+	for l.ch == ' ' || l.ch == '\n' {
 		l.readChar()
 	}
 }
