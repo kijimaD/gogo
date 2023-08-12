@@ -27,6 +27,17 @@ type Program struct {
 	Statements []Statement
 }
 
+// 文字列表示してデバッグしやすいようにする
+func (p *Program) String() string {
+	var out bytes.Buffer
+
+	for _, s := range p.Statements {
+		out.WriteString(s.String())
+	}
+
+	return out.String()
+}
+
 type ExpressionStatement struct {
 	Token      token.Token // 式の最初のトークン
 	Expression Expression  // 式を保持

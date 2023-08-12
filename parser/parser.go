@@ -101,13 +101,15 @@ func (p *Parser) ParseProgram() *ast.Program {
 	program.Statements = []ast.Statement{}
 
 	for p.curToken.Type != token.EOF {
-		if p.curToken.Type == token.ILLEGAL {
+		switch p.curToken.Type {
+		case token.ILLEGAL:
 			p.errors = append(p.errors, "illegal token is detected!")
-		}
-
-		stmt := p.parseStatement()
-		if stmt != nil {
-			program.Statements = append(program.Statements, stmt)
+		case token.SEMICOLON:
+		default:
+			stmt := p.parseStatement()
+			if stmt != nil {
+				program.Statements = append(program.Statements, stmt)
+			}
 		}
 		p.nextToken()
 	}

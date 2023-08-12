@@ -53,13 +53,63 @@ func testInfixExpression(t *testing.T, exp ast.Expression, left interface{}, ope
 
 // Test body ================
 
-func TestParseProgram(t *testing.T) {
-	l := lexer.New(`"hi" "all" 4`)
-	p := New(l)
+func TestParsePrim(t *testing.T) {
+	tests := []struct {
+		input  string
+		expect interface{}
+		length int
+	}{
+		{
+			`1`,
+			`1`,
+			1,
+		},
+		{
+			`"1"`,
+			`1`,
+			1,
+		},
+		{
+			`1;1`,
+			`11`,
+			2,
+		},
+		{
+			`1;
+2;
+3;`,
+			`123`,
+			3,
+		},
+		{
+			`"hello" "world"`,
+			`helloworld`,
+			2,
+		},
+		{
+			`"hello"; "world"`,
+			`helloworld`,
+			2,
+		},
+		{
+			`"hello"
+				  "world"`,
+			`helloworld`,
+			2,
+		},
+	}
 
-	result := p.ParseProgram()
-	checkParserErrors(t, p)
-	assert.Equal(t, 3, len(result.Statements))
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		pg := p.ParseProgram()
+
+		assert.Equal(t, tt.length, len(pg.Statements))
+
+		checkParserErrors(t, p)
+		actual := pg.String()
+		assert.Equal(t, tt.expect, actual)
+	}
 }
 
 // ILLEGALトークンがあるとerrorsが入る
@@ -116,36 +166,29 @@ func TestParseExpression(t *testing.T) {
 		expect interface{}
 	}{
 		{
-			name:   "文字列をパースする",
 			input:  `"hi"`,
 			expect: `hi`,
 		},
 		{
-			name:   "文字列をパースする(空白あり)",
 			input:  `    "hi"`,
 			expect: `hi`,
 		},
 		{
-			name:   "整数をパースする",
 			input:  `1`,
 			expect: `1`,
 		},
 		{
-			name:   "整数をパースする(空白あり)",
 			input:  `    1`,
 			expect: `1`,
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			l := lexer.New(tt.input)
-			p := New(l)
-			actual := p.parseExpression(LOWEST)
-			checkParserErrors(t, p)
-			assert.Equal(t, tt.expect, actual.String())
-
-		})
+		l := lexer.New(tt.input)
+		p := New(l)
+		actual := p.parseExpression(LOWEST)
+		checkParserErrors(t, p)
+		assert.Equal(t, tt.expect, actual.String())
 	}
 }
 
@@ -160,6 +203,10 @@ func TestParsePrecedence(t *testing.T) {
 			`((1 + 2) - 3)`,
 		},
 		{
+			`1 - 2 + 3`,
+			`((1 - 2) + 3)`,
+		},
+		{
 			`1 + 2 * 3`,
 			`(1 + (2 * 3))`,
 		},
@@ -171,14 +218,23 @@ func TestParsePrecedence(t *testing.T) {
 			`1 * 2 / 3`,
 			`((1 * 2) / 3)`,
 		},
+		{
+			`1 + 2; 3 / 4`,
+			`(1 + 2)(3 / 4)`,
+		},
+		{
+			`1; 2 * 3`,
+			`1(2 * 3)`,
+		},
 	}
 
 	for _, tt := range tests {
 		l := lexer.New(tt.input)
 		p := New(l)
-		actual := p.parseExpression(LOWEST)
+		pg := p.ParseProgram()
 		checkParserErrors(t, p)
-		assert.Equal(t, tt.expect, actual.String())
+		actual := pg.String()
+		assert.Equal(t, tt.expect, actual)
 	}
 }
 
