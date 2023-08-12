@@ -62,6 +62,15 @@ func TestParseProgram(t *testing.T) {
 	assert.Equal(t, 3, len(result.Statements))
 }
 
+// ILLEGALトークンがあるとerrorsが入る
+func TestParseProgramIllegal(t *testing.T) {
+	l := lexer.New(`illegal`)
+	p := New(l)
+
+	p.ParseProgram()
+	assertParserErrors(t, p)
+}
+
 func TestParseInfixExpression(t *testing.T) {
 	infixTests := []struct {
 		input      string
@@ -70,6 +79,9 @@ func TestParseInfixExpression(t *testing.T) {
 		rightValue interface{}
 	}{
 		{"5 + 5", 5, "+", 5},
+		{"5 - 5", 5, "-", 5},
+		{"5 * 5", 5, "*", 5},
+		{"5 / 5", 5, "/", 5},
 	}
 
 	for _, tt := range infixTests {
@@ -96,15 +108,7 @@ func TestParseInfixExpression(t *testing.T) {
 	}
 }
 
-// ILLEGALトークンがあるとerrorsが入る
-func TestParseProgramIllegal(t *testing.T) {
-	l := lexer.New(`illegal`)
-	p := New(l)
-
-	p.ParseProgram()
-	assertParserErrors(t, p)
-}
-
+// FIXME: 大雑把すぎるので分ける
 func TestParseExpression(t *testing.T) {
 	tests := []struct {
 		name   string
@@ -131,56 +135,6 @@ func TestParseExpression(t *testing.T) {
 			input:  `    1`,
 			expect: `1`,
 		},
-		{
-			name:   "+をパースする",
-			input:  `1+1`,
-			expect: "(1 + 1)",
-		},
-		{
-			name:   "+をパースする(空白あり)",
-			input:  `1 + 1`,
-			expect: "(1 + 1)",
-		},
-		{
-			name:   "+をパースする(異なる型)",
-			input:  `1 + "hello"`,
-			expect: `(1 + hello)`,
-		},
-		{
-			name:   "+をパースする(適用順序)",
-			input:  `1 + 2 + 3 + 4`,
-			expect: `(((1 + 2) + 3) + 4)`,
-		},
-		{
-			name:   "-をパースする",
-			input:  `3-1`,
-			expect: "(3 - 1)",
-		},
-		{
-			name:   "-をパースする(適用順序)",
-			input:  `1-1+1-1`,
-			expect: "(((1 - 1) + 1) - 1)",
-		},
-		{
-			name:   "*をパースする",
-			input:  `1*1`,
-			expect: "(1 * 1)",
-		},
-		{
-			name:   "*をパースする(適用順序)",
-			input:  `1+2*3+4`,
-			expect: "((1 + (2 * 3)) + 4)",
-		},
-		{
-			name:   "/をパースする",
-			input:  `4/2`,
-			expect: "(4 / 2)",
-		},
-		{
-			name:   "/をパースする(適用順序)",
-			input:  `3+4/2+3`,
-			expect: "((3 + (4 / 2)) + 3)",
-		},
 	}
 
 	for _, tt := range tests {
@@ -192,6 +146,39 @@ func TestParseExpression(t *testing.T) {
 			assert.Equal(t, tt.expect, actual.String())
 
 		})
+	}
+}
+
+// 優先順位が正しいか
+func TestParsePrecedence(t *testing.T) {
+	tests := []struct {
+		input  string
+		expect interface{}
+	}{
+		{
+			`1 + 2 - 3`,
+			`((1 + 2) - 3)`,
+		},
+		{
+			`1 + 2 * 3`,
+			`(1 + (2 * 3))`,
+		},
+		{
+			`1 + 2 / 3`,
+			`(1 + (2 / 3))`,
+		},
+		{
+			`1 * 2 / 3`,
+			`((1 * 2) / 3)`,
+		},
+	}
+
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		actual := p.parseExpression(LOWEST)
+		checkParserErrors(t, p)
+		assert.Equal(t, tt.expect, actual.String())
 	}
 }
 
