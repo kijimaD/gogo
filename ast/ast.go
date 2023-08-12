@@ -38,6 +38,15 @@ func (p *Program) String() string {
 	return out.String()
 }
 
+type Identifier struct {
+	Token token.Token
+	Value string
+}
+
+func (i *Identifier) expressionNode()      {}
+func (i *Identifier) TokenLiteral() string { return i.Token.Literal }
+func (i *Identifier) String() string       { return i.Value }
+
 type ExpressionStatement struct {
 	Token      token.Token // 式の最初のトークン
 	Expression Expression  // 式を保持
@@ -86,6 +95,24 @@ func (ie *InfixExpression) String() string {
 	out.WriteString(" " + ie.Operator + " ")
 	out.WriteString(ie.Right.String())
 	out.WriteString(")")
+
+	return out.String()
+}
+
+// int a = 1;
+type DeclStatement struct {
+	Token token.Token
+	Name  *Identifier
+	Value Expression
+}
+
+func (de *DeclStatement) statementNode()       {}
+func (de *DeclStatement) TokenLiteral() string { return de.Token.Literal }
+func (de *DeclStatement) String() string {
+	var out bytes.Buffer
+	out.WriteString(de.TokenLiteral() + " " + de.Name.Value)
+	out.WriteString(" = ")
+	out.WriteString(de.Value.String())
 
 	return out.String()
 }

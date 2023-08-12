@@ -81,6 +81,25 @@ func (p *Parser) nextToken() {
 	p.peekToken = p.l.NextToken()
 }
 
+// peekTokenの型をチェックし、その型が正しい場合に限ってnextTokenを読んで、トークンを進める
+func (p *Parser) expectPeek(t token.TokenType) bool {
+	if p.peekTokenIs(t) {
+		p.nextToken()
+		return true
+	} else {
+		p.peekError(t)
+		return false
+	}
+}
+
+func (p *Parser) peekError(t token.TokenType) {
+	msg := fmt.Sprintf("expected next token to be %s, got %s instead",
+		t,
+		p.peekToken.Type,
+	)
+	p.errors = append(p.errors, msg)
+}
+
 func (p *Parser) peekPrecedence() int {
 	if p, ok := precedences[p.peekToken.Type]; ok {
 		return p
@@ -129,9 +148,19 @@ func (p *Parser) registerInfix(tokenType token.TokenType, fn infixParseFn) {
 // 文は代入とか、ifの実行文とか(条件部分は式)、返り値がないもの
 func (p *Parser) parseStatement() ast.Statement {
 	switch p.curToken.Type {
-	default:
-		return p.parseExpressionStatement()
+	case token.IDENT:
+		// TODO: 型をテーブルから参照する
+		if p.curToken.Literal == token.CTYPE_VOID ||
+			p.curToken.Literal == token.CTYPE_INT ||
+			p.curToken.Literal == token.CTYPE_CHAR ||
+			p.curToken.Literal == token.CTYPE_STR {
+			decl := p.parseDeclStatement()
+			if decl != nil {
+				return decl
+			}
+		}
 	}
+	return p.parseExpressionStatement()
 }
 
 // 式文
@@ -140,6 +169,25 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 
 	stmt.Expression = p.parseExpression(LOWEST)
 
+	return stmt
+}
+
+// int a = 1
+func (p *Parser) parseDeclStatement() *ast.DeclStatement {
+	stmt := &ast.DeclStatement{Token: p.curToken}
+
+	if !p.expectPeek(token.IDENT) {
+		return nil
+	}
+
+	stmt.Name = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+
+	if !p.expectPeek(token.ASSIGN) {
+		return nil
+	}
+
+	p.nextToken()
+	stmt.Value = p.parseExpression(LOWEST)
 	return stmt
 }
 
