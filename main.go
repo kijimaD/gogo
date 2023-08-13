@@ -68,15 +68,15 @@ func emitBinop(i ast.InfixExpression) {
 	}
 }
 
-func compile(e ast.Node) {
-	switch ast := e.(type) {
+func compile(n ast.Node) {
+	switch node := n.(type) {
 	case *ast.StringLiteral:
-		emitString(*ast)
-	default:
+		emitString(*node)
+	case *ast.InfixExpression, *ast.IntegerLiteral:
 		fmt.Printf(".text\n\t")
 		fmt.Printf(".global intfn\n")
 		fmt.Printf("intfn:\n\t")
-		emitIntexpr(e)
+		emitIntexpr(node)
 		fmt.Printf("ret\n")
 	}
 }
