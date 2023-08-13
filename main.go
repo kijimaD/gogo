@@ -11,6 +11,7 @@ import (
 	"github.com/kijimaD/gogo/asm"
 	"github.com/kijimaD/gogo/ast"
 	"github.com/kijimaD/gogo/lexer"
+	"github.com/kijimaD/gogo/object"
 	"github.com/kijimaD/gogo/parser"
 )
 
@@ -21,6 +22,8 @@ func main() {
 		str = scanner.Text()
 	}
 
+	env := object.NewEnvironment()
+
 	l := lexer.New(str)
 	p := parser.New(l)
 	prog := p.ParseProgram()
@@ -29,7 +32,14 @@ func main() {
 			log.Fatal(err)
 		}
 	}
-	stmt, _ := prog.Statements[0].(*ast.ExpressionStatement)
-	exp := stmt.Expression
-	asm.Compile(exp)
+	for _, stmt := range prog.Statements {
+		switch s := stmt.(type) {
+		case *ast.ExpressionStatement:
+			exp := s.Expression
+			asm.Compile(env, exp)
+		case *ast.DeclStatement:
+			exp := s.Value
+			asm.Compile(env, exp)
+		}
+	}
 }
