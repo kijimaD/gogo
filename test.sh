@@ -1,16 +1,18 @@
 #!/bin/bash
 
+# C言語では、main関数が返した値がプログラム全体としての終了コードになる。終了コードはシェルの$?変数に格納されているので、確認できる。
+
 function compile {
     echo "$1" | go run . > tmp.s
     if [ $? -ne 0 ]; then
         echo "Failed to compile $1"
-        exit
+        exit -1
     fi
 
     gcc -o tmp.out c/driver.c tmp.s
     if [ $? -ne 0 ]; then
         echo "GCC failed"
-        exit
+        exit -1
     fi
 }
 
@@ -21,7 +23,7 @@ function test {
     result="`./tmp.out`"
     if [ "$result" != "$expected" ]; then
         echo "Test failed: $expected expected but got $result"
-        exit
+        exit -1
     fi
 
     echo "✓"
@@ -32,7 +34,7 @@ function testfail {
   echo "$expr" | go run . > /dev/null 2>&1
   if [ $? -eq 0 ]; then
     echo "Should fail to compile, but succeded: $expr"
-    exit
+    exit -1
   fi
 }
 
