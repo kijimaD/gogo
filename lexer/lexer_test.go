@@ -102,6 +102,7 @@ a = 1;
 a;
 abc;
 a + b;
+42a;
 `
 
 	tests := []struct {
@@ -148,6 +149,9 @@ a + b;
 		{token.IDENT, "a"},
 		{token.PLUS, "+"},
 		{token.IDENT, "b"},
+		{token.SEMICOLON, ";"},
+
+		{token.ILLEGAL, "a"},
 		{token.SEMICOLON, ";"},
 	}
 

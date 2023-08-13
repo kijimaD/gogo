@@ -50,14 +50,25 @@ func (l *Lexer) NextToken() token.Token {
 		tok.Literal = ""
 		tok.Type = token.EOF
 	default:
-		if isLetter(l.ch) {
-			tok.Literal = l.readIdentifier()
-			tok.Type = token.IDENT
-			return tok
-		} else if isDigit(l.ch) {
+		if isDigit(l.ch) {
 			tok.Literal = l.readNumber()
 			tok.Type = token.INT
+
+			// 数字の次の文字がスペース区切りなしで非数字だったら文法エラー -- 42a など
+			// これはパーサーでやることではないような気もする
+			// 評価時にきめることではないのか?
+			if isLetter(l.ch) {
+				tok = newToken(token.ILLEGAL, l.ch)
+				l.readChar()
+				return tok
+			}
+
 			return tok // readNumberは "1+2"で1にあったとき現在値を+に進めているので、この関数の最終行で1文字余計に進めないようにreturnが必要
+		} else if isLetter(l.ch) {
+			tok.Literal = l.readIdentifier()
+			tok.Type = token.IDENT
+			// TODO: ここでIDENTを組み込みのものか判断すればよさそう
+			return tok
 		} else {
 			tok = newToken(token.ILLEGAL, l.ch)
 		}

@@ -110,11 +110,20 @@ func TestParsePrim(t *testing.T) {
 
 // ILLEGALトークンがあるとerrorsが入る
 func TestParseProgramIllegal(t *testing.T) {
-	l := lexer.New(`"illegal`) // ダブルクォートのペアが合わない
-	p := New(l)
+	tests := []struct {
+		input string
+	}{
+		{`"unbalance quote`},
+		{`42a`},
+	}
 
-	p.ParseProgram()
-	assertParserErrors(t, p)
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		_ = p.ParseProgram()
+		assertParserErrors(t, p)
+	}
+
 }
 
 func TestParseInfixExpression(t *testing.T) {
