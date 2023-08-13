@@ -14,7 +14,7 @@ import (
 	"github.com/kijimaD/gogo/parser"
 )
 
-func emitIntexpr(e ast.Expression) {
+func emitIntexpr(e ast.Node) {
 	switch ast := e.(type) {
 	case *ast.IntegerLiteral:
 		fmt.Printf("mov $%s, %%eax\n\t", ast.String())
@@ -68,7 +68,7 @@ func emitBinop(i ast.InfixExpression) {
 	}
 }
 
-func compile(e ast.Expression) {
+func compile(e ast.Node) {
 	switch ast := e.(type) {
 	case *ast.StringLiteral:
 		emitString(*ast)
