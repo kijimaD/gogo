@@ -64,13 +64,13 @@ test 1 '1+1/2'
 test 8 '3+4/2+3'
 test 18 '3*4/2*3'
 test 3 '24/2/4'
-test 2 'int a = 2;a;' # とりあえずエラーが出ないというだけで、中身は意味のないものになっている
+test 2 'int a = 2;a;'
 
 testfail 42a   # 引数として渡されるのは文字列としてのダブルクォートを含まない 42a
 testfail "42a" # 引数として渡されるのは文字列としてのダブルクォートを含まない 42a
 testfail '42a' # 引数として渡されるのは文字列としてのダブルクォートを含まない 42a
 testfail '"abc'
-testfail '1+'  # 謎の数字が返る。エラーにはならない
+testfail '1+'
 testfail '1+"abc"'
 
 rm -f gogo.out gogo.s

@@ -114,7 +114,8 @@ func TestParseProgramIllegal(t *testing.T) {
 		input string
 	}{
 		{`"unbalance quote`},
-		{`42a`},
+		{`42a`}, // 数値から始まる識別子
+		{`1+`},  // 中置演算子の右側がない
 	}
 
 	for _, tt := range tests {

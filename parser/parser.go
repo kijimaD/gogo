@@ -196,6 +196,8 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 	// 前置構文
 	prefix := p.prefixParseFns[p.curToken.Type]
 	if prefix == nil {
+		msg := fmt.Sprintf("no prefix parse function for %s found", p.curToken.Type)
+		p.errors = append(p.errors, msg)
 		return nil
 	}
 	leftExp := prefix()
