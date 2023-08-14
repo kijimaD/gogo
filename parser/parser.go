@@ -213,8 +213,13 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 	return leftExp
 }
 
+var Strings = []string{}
+
 func (p *Parser) parseStringLiteral() ast.Expression {
-	return &ast.StringLiteral{Token: p.curToken, Value: p.curToken.Literal}
+	id := len(Strings)
+	strlit := &ast.StringLiteral{Token: p.curToken, Value: p.curToken.Literal, ID: id}
+	Strings = append(Strings, strlit.Value)
+	return strlit
 }
 
 func (p *Parser) parseIntegerLiteral() ast.Expression {

@@ -33,9 +33,11 @@ func main() {
 			log.Fatal(err)
 		}
 	}
+	asm.EmitDataSection()
 	fmt.Printf(".text\n\t")
 	fmt.Printf(".global mymain\n")
 	fmt.Printf("mymain:\n\t")
+
 	for _, stmt := range prog.Statements {
 		switch s := stmt.(type) {
 		case *ast.ExpressionStatement:

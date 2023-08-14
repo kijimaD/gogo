@@ -64,6 +64,7 @@ func (es *ExpressionStatement) String() string {
 type StringLiteral struct {
 	Token token.Token
 	Value string
+	ID    int
 }
 
 func (sl *StringLiteral) ExpressionNode()      {}
