@@ -5,6 +5,7 @@ import (
 )
 import (
 	"bufio"
+	"fmt"
 	"log"
 	"os"
 
@@ -32,14 +33,18 @@ func main() {
 			log.Fatal(err)
 		}
 	}
+	fmt.Printf(".text\n\t")
+	fmt.Printf(".global mymain\n")
+	fmt.Printf("mymain:\n\t")
 	for _, stmt := range prog.Statements {
 		switch s := stmt.(type) {
 		case *ast.ExpressionStatement:
 			exp := s.Expression
-			asm.Compile(env, exp)
+			asm.EmitExpr(env, exp)
 		case *ast.DeclStatement:
 			exp := s.Value
-			asm.Compile(env, exp)
+			asm.EmitExpr(env, exp)
 		}
 	}
+	fmt.Printf("ret\n")
 }

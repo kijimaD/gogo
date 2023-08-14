@@ -4,12 +4,12 @@
 #include <stdio.h>
 
 #define WEAK __attribute__((weak))
-extern int intfn(void) WEAK;
+extern int mymain(void) WEAK;
 extern char *stringfn(void) WEAK;
 
 int main(int argc, char **argv) {
-  if (intfn) {
-    printf("%d\n", intfn());
+  if (mymain) {
+    printf("%d\n", mymain());
   } else if (stringfn) {
     printf("%s\n", stringfn());
   } else {
