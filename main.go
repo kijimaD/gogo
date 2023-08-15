@@ -33,7 +33,7 @@ func main() {
 			log.Fatal(err)
 		}
 	}
-	asm.EmitDataSection()
+	asm.EmitDataSection(p)
 	fmt.Printf(".text\n\t")
 	fmt.Printf(".global mymain\n")
 	fmt.Printf("mymain:\n\t")

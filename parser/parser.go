@@ -19,6 +19,7 @@ type Parser struct {
 	prefixParseFns map[token.TokenType]prefixParseFn
 	infixParseFns  map[token.TokenType]infixParseFn
 
+	Strs   []string // 定義済みの文字列一覧。ラベルの定義に使う。スタックに入っているので、位置が必要
 	errors []string
 }
 
@@ -55,6 +56,7 @@ var precedences = map[token.TokenType]int{
 func New(l *lexer.Lexer) *Parser {
 	p := &Parser{
 		l:      l,
+		Strs:   []string{},
 		errors: []string{},
 	}
 
@@ -216,12 +218,10 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 	return leftExp
 }
 
-var Strings = []string{}
-
 func (p *Parser) parseStringLiteral() ast.Expression {
-	id := len(Strings)
+	id := len(p.Strs)
 	strlit := &ast.StringLiteral{Token: p.curToken, Value: p.curToken.Literal, ID: id}
-	Strings = append(Strings, strlit.Value)
+	p.Strs = append(p.Strs, strlit.Value)
 	return strlit
 }
 

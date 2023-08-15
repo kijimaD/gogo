@@ -63,11 +63,11 @@ func evalIdentifier(e *object.Environment, ident *ast.Identifier) {
 }
 
 // 定義した文字列にデータラベルをつける
-func EmitDataSection() {
-	if len(parser.Strings) == 0 {
+func EmitDataSection(p *parser.Parser) {
+	if len(p.Strs) == 0 {
 		return
 	}
-	for i, str := range parser.Strings {
+	for i, str := range p.Strs {
 		fmt.Printf("\t.data\n")
 		fmt.Printf(".s%d:\n\t", i)
 		fmt.Printf(".string \"")
