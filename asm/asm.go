@@ -7,26 +7,30 @@ import (
 	"github.com/kijimaD/gogo/ast"
 	"github.com/kijimaD/gogo/object"
 	"github.com/kijimaD/gogo/parser"
+	"github.com/kijimaD/gogo/token"
 )
 
 var Vpos = 1
 
+// 変数の位置をアセンブリコードの中で正しいメモリアドレスに変換するための定数。1つの変数は4バイトに格納されている
+const varWidth = 4
+
 func emitBinop(env *object.Environment, i ast.InfixExpression) {
 	var op string
 	switch i.Operator {
-	case "+":
+	case token.PLUS:
 		op = "add"
-	case "-":
+	case token.MINUS:
 		op = "sub"
-	case "*":
+	case token.ASTERISK:
 		op = "imul"
-	case "/":
+	case token.SLASH:
 		op = ""
 	default:
 		log.Fatal("invalid operand:", op)
 	}
 
-	if i.Operator == "/" {
+	if i.Operator == token.SLASH {
 		EmitExpr(env, i.Left)
 		fmt.Printf("push %%rax\n\t")
 		EmitExpr(env, i.Right)
@@ -46,7 +50,7 @@ func emitBinop(env *object.Environment, i ast.InfixExpression) {
 func EvalDeclStmt(e *object.Environment, ds *ast.DeclStatement) {
 	obj := &object.String{Value: ds.Name.Token.Literal, Pos: Vpos}
 	e.Set(ds.Name.Token.Literal, obj)
-	fmt.Printf("mov %%eax, -%d(%%rbp)\n\t", Vpos*4)
+	fmt.Printf("mov %%eax, -%d(%%rbp)\n\t", Vpos*varWidth)
 	Vpos++
 }
 
@@ -55,7 +59,7 @@ func evalIdentifier(e *object.Environment, ident *ast.Identifier) {
 	if !ok {
 		log.Fatal("not exist variable: ", ident.Token.Literal)
 	}
-	fmt.Printf("mov %%eax, -%d(%%rbp)\n\t", result.CurPos()*4)
+	fmt.Printf("mov %%eax, -%d(%%rbp)\n\t", result.CurPos()*varWidth)
 }
 
 // 定義した文字列にデータラベルをつける
