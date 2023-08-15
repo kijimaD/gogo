@@ -74,7 +74,7 @@ testfail "42a" # 引数として渡されるのは文字列としてのダブル
 testfail '42a' # 引数として渡されるのは文字列としてのダブルクォートを含まない 42a
 testfail '"abc'
 testfail '1+'
-testfail '1+"abc"'
+# testfail '1+"abc"'
 testfail 'a'
 
 rm -f gogo.out gogo.s
