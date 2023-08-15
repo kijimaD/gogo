@@ -232,19 +232,23 @@ func TestParsePrecedence(t *testing.T) {
 		},
 		{
 			`int a = 1`,
-			`int a = 1`,
+			`(int a = 1)`,
 		},
 		{
 			`int a = 1+2`,
-			`int a = (1 + 2)`,
+			`(int a = (1 + 2))`,
 		},
 		{
 			`int a = 1+2*3`,
-			`int a = (1 + (2 * 3))`,
+			`(int a = (1 + (2 * 3)))`,
+		},
+		{
+			`int a = 1; a+2*2`,
+			`(int a = 1)(a + (2 * 2))`,
 		},
 		{
 			`string a = "str"`,
-			`string a = "str"`,
+			`(string a = "str")`,
 		},
 	}
 

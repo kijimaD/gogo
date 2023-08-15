@@ -110,9 +110,11 @@ func (de *DeclStatement) statementNode()       {}
 func (de *DeclStatement) TokenLiteral() string { return de.Token.Literal }
 func (de *DeclStatement) String() string {
 	var out bytes.Buffer
+	out.WriteString("(")
 	out.WriteString(de.TokenLiteral() + " " + de.Name.Token.Literal)
 	out.WriteString(" = ")
 	out.WriteString(de.Value.String())
+	out.WriteString(")")
 
 	return out.String()
 }
