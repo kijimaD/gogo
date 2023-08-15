@@ -10,7 +10,7 @@ import (
 	"github.com/kijimaD/gogo/token"
 )
 
-var Vpos = 1
+var varPos = 1
 
 // 変数の位置をアセンブリコードの中で正しいメモリアドレスに変換するための定数。1つの変数は4バイトに格納されている
 const varWidth = 4
@@ -48,10 +48,10 @@ func emitBinop(env *object.Environment, i ast.InfixExpression) {
 }
 
 func EvalDeclStmt(e *object.Environment, ds *ast.DeclStatement) {
-	obj := &object.String{Value: ds.Name.Token.Literal, Pos: Vpos}
+	obj := &object.String{Value: ds.Name.Token.Literal, Pos: varPos}
 	e.Set(ds.Name.Token.Literal, obj)
-	fmt.Printf("mov %%eax, -%d(%%rbp)\n\t", Vpos*varWidth)
-	Vpos++
+	fmt.Printf("mov %%eax, -%d(%%rbp)\n\t", varPos*varWidth)
+	varPos++
 }
 
 func evalIdentifier(e *object.Environment, ident *ast.Identifier) {
