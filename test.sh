@@ -44,7 +44,6 @@ make -s gogo
 
 test 0 0
 test 42 42
-
 test 3 '1+2'
 test 3 '1 + 2'
 test 3 '1+ 2'
@@ -62,6 +61,10 @@ test 3 '24/2/4'
 test 2 'int a = 2;a;'
 test 3 'int a = 2;a;3'
 test 4 'int a = 1+1; a+2'
+test 1 'int a = 1;a'
+test 2 'int a = 1;a+1'
+# test 3 'int a = 1;a+2' # => なぜか4になる
+# test 4 'int a = 1;a+3' # => なぜか6になる
 
 testfail 42a   # 引数として渡されるのは文字列としてのダブルクォートを含まない 42a
 testfail "42a" # 引数として渡されるのは文字列としてのダブルクォートを含まない 42a
