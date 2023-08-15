@@ -45,12 +45,6 @@ make -s gogo
 test 0 0
 test 42 42
 
-# 謎の数字が返る
-# コンパイルした結果返されるのはintegerなので、チェックできない?
-# なぜ今までできていた?
-# test 42a '"42a"'
-# test hello '"hello"'
-# test "hello world" '"hello world"'
 test 3 '1+2'
 test 3 '1 + 2'
 test 3 '1+ 2'

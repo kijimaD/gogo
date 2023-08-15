@@ -62,7 +62,7 @@ func TestParsePrim(t *testing.T) {
 		},
 		{
 			`"1"`,
-			`1`,
+			`"1"`,
 			1,
 		},
 		{
@@ -79,18 +79,18 @@ func TestParsePrim(t *testing.T) {
 		},
 		{
 			`"hello" "world"`,
-			`helloworld`,
+			`"hello""world"`,
 			2,
 		},
 		{
 			`"hello"; "world"`,
-			`helloworld`,
+			`"hello""world"`,
 			2,
 		},
 		{
 			`"hello"
 				  "world"`,
-			`helloworld`,
+			`"hello""world"`,
 			2,
 		},
 	}
@@ -171,11 +171,11 @@ func TestParseExpression(t *testing.T) {
 	}{
 		{
 			input:  `"hi"`,
-			expect: `hi`,
+			expect: `"hi"`,
 		},
 		{
 			input:  `    "hi"`,
-			expect: `hi`,
+			expect: `"hi"`,
 		},
 		{
 			input:  `1`,
@@ -244,7 +244,7 @@ func TestParsePrecedence(t *testing.T) {
 		},
 		{
 			`string a = "str"`,
-			`string a = str`,
+			`string a = "str"`,
 		},
 	}
 
