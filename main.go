@@ -46,6 +46,9 @@ func main() {
 		case *ast.DeclStatement:
 			exp := s.Value
 			asm.EmitExpr(env, exp)
+			asm.EvalDeclStmt(env, s)
+		default:
+			log.Fatal("not support statement:", s)
 		}
 	}
 	fmt.Printf("ret\n")

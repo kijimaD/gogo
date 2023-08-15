@@ -59,12 +59,15 @@ test 4 '1+2-3+4'
 test 2 '5 - 3'
 test 4 '5-1-1+1'
 test 11 '1+2*3+4'
+test 7 '1+2*3'
 test 2 '2/2+1'
 test 1 '1+1/2'
 test 8 '3+4/2+3'
 test 18 '3*4/2*3'
 test 3 '24/2/4'
 test 2 'int a = 2;a;'
+test 3 'int a = 2;a;3'
+test 4 'int a = 1+1; a+2'
 
 testfail 42a   # 引数として渡されるのは文字列としてのダブルクォートを含まない 42a
 testfail "42a" # 引数として渡されるのは文字列としてのダブルクォートを含まない 42a
@@ -72,6 +75,7 @@ testfail '42a' # 引数として渡されるのは文字列としてのダブル
 testfail '"abc'
 testfail '1+'
 testfail '1+"abc"'
+testfail 'a'
 
 rm -f gogo.out gogo.s
 echo "All tests passed"

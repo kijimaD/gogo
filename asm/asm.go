@@ -43,17 +43,17 @@ func emitBinop(env *object.Environment, i ast.InfixExpression) {
 	}
 }
 
-func evalDeclStmt(e *object.Environment, ds *ast.DeclStatement) {
-	obj := &object.String{Value: ds.Name.Value, Pos: Vpos}
-	e.Set(ds.Name.Value, obj)
+func EvalDeclStmt(e *object.Environment, ds *ast.DeclStatement) {
+	obj := &object.String{Value: ds.Name.Token.Literal, Pos: Vpos}
+	e.Set(ds.Name.Token.Literal, obj)
 	fmt.Printf("mov %%eax, -%d(%%rbp)\n\t", Vpos*4)
 	Vpos++
 }
 
 func evalIdentifier(e *object.Environment, ident *ast.Identifier) {
-	result, ok := e.Get(ident.Value)
+	result, ok := e.Get(ident.Token.Literal)
 	if !ok {
-		log.Fatal("not exist variable: ", ident.Value)
+		log.Fatal("not exist variable: ", ident.Token.Literal)
 	}
 	fmt.Printf("mov %%eax, -%d(%%rbp)\n\t", result.CurPos()*4)
 }
@@ -80,10 +80,7 @@ func EmitExpr(env *object.Environment, node ast.Node) {
 	case *ast.StringLiteral:
 		fmt.Printf("lea .s%d(%%rip), %%rax\n\t", n.ID)
 	case *ast.Identifier:
-		resultobj, _ := env.Get(n.Value)
-		fmt.Printf("mov -%d(%%rbp), %%eax\n\t", resultobj.CurPos()*4)
-	case *ast.DeclStatement:
-		evalDeclStmt(env, n)
+		evalIdentifier(env, n)
 	case *ast.InfixExpression:
 		emitBinop(env, *n)
 	}

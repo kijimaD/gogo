@@ -40,12 +40,11 @@ func (p *Program) String() string {
 
 type Identifier struct {
 	Token token.Token
-	Value string
 }
 
-func (i *Identifier) expressionNode()      {}
+func (i *Identifier) ExpressionNode()      {}
 func (i *Identifier) TokenLiteral() string { return i.Token.Literal }
-func (i *Identifier) String() string       { return i.Value }
+func (i *Identifier) String() string       { return i.Token.Literal }
 
 type ExpressionStatement struct {
 	Token      token.Token // 式の最初のトークン
@@ -111,7 +110,7 @@ func (de *DeclStatement) statementNode()       {}
 func (de *DeclStatement) TokenLiteral() string { return de.Token.Literal }
 func (de *DeclStatement) String() string {
 	var out bytes.Buffer
-	out.WriteString(de.TokenLiteral() + " " + de.Name.Value)
+	out.WriteString(de.TokenLiteral() + " " + de.Name.Token.Literal)
 	out.WriteString(" = ")
 	out.WriteString(de.Value.String())
 
