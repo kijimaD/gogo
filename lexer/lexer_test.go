@@ -74,11 +74,6 @@ func TestIllegal(t *testing.T) {
 		expect token.TokenType
 	}{
 		{
-			name:   "ダブルクォートがなく数字でもない",
-			input:  `naked string`,
-			expect: token.ILLEGAL,
-		},
-		{
 			name:   "ダブルクォートのペアが合わない",
 			input:  `"not pair`,
 			expect: token.ILLEGAL,
@@ -101,8 +96,13 @@ func TestNextToken(t *testing.T) {
 3 * 4;
 5 / 6;
 7 - 8;
+a = 1;
 "hello";
 	1  ;
+a;
+abc;
+a + b;
+42a;
 `
 
 	tests := []struct {
@@ -113,28 +113,58 @@ func TestNextToken(t *testing.T) {
 		{token.PLUS, "+"},
 		{token.INT, "2"},
 		{token.SEMICOLON, ";"},
+
 		{token.INT, "3"},
 		{token.ASTERISK, "*"},
 		{token.INT, "4"},
 		{token.SEMICOLON, ";"},
+
 		{token.INT, "5"},
 		{token.SLASH, "/"},
 		{token.INT, "6"},
 		{token.SEMICOLON, ";"},
+
 		{token.INT, "7"},
 		{token.MINUS, "-"},
 		{token.INT, "8"},
 		{token.SEMICOLON, ";"},
+
+		{token.IDENT, "a"},
+		{token.ASSIGN, "="},
+		{token.INT, "1"},
+		{token.SEMICOLON, ";"},
+
 		{token.STRING, "hello"},
 		{token.SEMICOLON, ";"},
+
 		{token.INT, "1"},
+		{token.SEMICOLON, ";"},
+
+		{token.IDENT, "a"},
+		{token.SEMICOLON, ";"},
+
+		{token.IDENT, "abc"},
+		{token.SEMICOLON, ";"},
+
+		{token.IDENT, "a"},
+		{token.PLUS, "+"},
+		{token.IDENT, "b"},
+		{token.SEMICOLON, ";"},
+
+		{token.ILLEGAL, "a"},
 		{token.SEMICOLON, ";"},
 	}
 
 	l := New(input)
 	for _, tt := range tests {
 		tok := l.NextToken()
-
 		assert.Equal(t, tt.expectedType, tok.Type)
+		assert.Equal(t, tt.expectedLiteral, tok.Literal)
 	}
+}
+
+func TestIsLetter(t *testing.T) {
+	assert.True(t, isLetter('a'))
+	assert.True(t, isLetter('B'))
+	assert.False(t, isLetter('1'))
 }

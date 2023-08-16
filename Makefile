@@ -1,3 +1,8 @@
+CFLAGS=-Wall -std=gnu99
+
+.PHONY: gogo
+gogo: gogo.o
+
 .PHONY: test
 test:
 	go test ./... -v && \
@@ -5,4 +10,4 @@ test:
 
 .PHONY: clean
 clean:
-	rm -f *.out *.s
+	rm -f gogo *.out *.s *.o

@@ -39,16 +39,12 @@ func assertParserErrors(t *testing.T, p *Parser) {
 func testInfixExpression(t *testing.T, exp ast.Expression, left interface{}, operator string, right interface{}) bool {
 	t.Helper()
 	opExp, ok := exp.(*ast.InfixExpression)
-	if !ok {
-		t.Errorf("exp is not ast.InfixExpression. got=%tT(%s)", exp, exp)
-		return false
-	}
-	if opExp.Operator != operator {
-		t.Errorf("exp.Operator is not '%s'. got=%q", operator, opExp.Operator)
-		return false
-	}
+	assert.True(t, ok)
+	assert.Equal(t, operator, opExp.Operator)
+	assert.Equal(t, opExp.Left.String(), left)
+	assert.Equal(t, opExp.Right.String(), right)
 
-	return false
+	return true
 }
 
 // Test body ================
@@ -66,7 +62,7 @@ func TestParsePrim(t *testing.T) {
 		},
 		{
 			`"1"`,
-			`1`,
+			`"1"`,
 			1,
 		},
 		{
@@ -83,18 +79,18 @@ func TestParsePrim(t *testing.T) {
 		},
 		{
 			`"hello" "world"`,
-			`helloworld`,
+			`"hello""world"`,
 			2,
 		},
 		{
 			`"hello"; "world"`,
-			`helloworld`,
+			`"hello""world"`,
 			2,
 		},
 		{
 			`"hello"
 				  "world"`,
-			`helloworld`,
+			`"hello""world"`,
 			2,
 		},
 	}
@@ -114,24 +110,34 @@ func TestParsePrim(t *testing.T) {
 
 // ILLEGALトークンがあるとerrorsが入る
 func TestParseProgramIllegal(t *testing.T) {
-	l := lexer.New(`illegal`)
-	p := New(l)
+	tests := []struct {
+		input string
+	}{
+		{`"unbalance quote`},
+		{`42a`}, // 数値から始まる識別子
+		{`1+`},  // 中置演算子の右側がない
+	}
 
-	p.ParseProgram()
-	assertParserErrors(t, p)
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		_ = p.ParseProgram()
+		assertParserErrors(t, p)
+	}
+
 }
 
 func TestParseInfixExpression(t *testing.T) {
 	infixTests := []struct {
 		input      string
-		leftValue  interface{}
+		leftValue  string
 		operator   string
-		rightValue interface{}
+		rightValue string
 	}{
-		{"5 + 5", 5, "+", 5},
-		{"5 - 5", 5, "-", 5},
-		{"5 * 5", 5, "*", 5},
-		{"5 / 5", 5, "/", 5},
+		{"5 + 5", "5", "+", "5"},
+		{"5 - 5", "5", "-", "5"},
+		{"5 * 5", "5", "*", "5"},
+		{"5 / 5", "5", "/", "5"},
 	}
 
 	for _, tt := range infixTests {
@@ -151,14 +157,12 @@ func TestParseInfixExpression(t *testing.T) {
 				program.Statements[0])
 		}
 
-		if !testInfixExpression(t, stmt.Expression, tt.leftValue,
-			tt.operator, tt.rightValue) {
-			return
-		}
+		ok = testInfixExpression(t, stmt.Expression, tt.leftValue, tt.operator, tt.rightValue)
+
+		assert.True(t, ok)
 	}
 }
 
-// FIXME: 大雑把すぎるので分ける
 func TestParseExpression(t *testing.T) {
 	tests := []struct {
 		name   string
@@ -167,11 +171,11 @@ func TestParseExpression(t *testing.T) {
 	}{
 		{
 			input:  `"hi"`,
-			expect: `hi`,
+			expect: `"hi"`,
 		},
 		{
 			input:  `    "hi"`,
-			expect: `hi`,
+			expect: `"hi"`,
 		},
 		{
 			input:  `1`,
@@ -225,6 +229,26 @@ func TestParsePrecedence(t *testing.T) {
 		{
 			`1; 2 * 3`,
 			`1(2 * 3)`,
+		},
+		{
+			`int a = 1`,
+			`(int a = 1)`,
+		},
+		{
+			`int a = 1+2`,
+			`(int a = (1 + 2))`,
+		},
+		{
+			`int a = 1+2*3`,
+			`(int a = (1 + (2 * 3)))`,
+		},
+		{
+			`int a = 1; a+2*2`,
+			`(int a = 1)(a + (2 * 2))`,
+		},
+		{
+			`string a = "str"`,
+			`(string a = "str")`,
 		},
 	}
 

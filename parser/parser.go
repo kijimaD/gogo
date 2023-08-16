@@ -19,6 +19,7 @@ type Parser struct {
 	prefixParseFns map[token.TokenType]prefixParseFn
 	infixParseFns  map[token.TokenType]infixParseFn
 
+	Strs   []string // 定義済みの文字列一覧。ラベルの定義に使う。スタックに入っているので、位置が必要
 	errors []string
 }
 
@@ -55,12 +56,14 @@ var precedences = map[token.TokenType]int{
 func New(l *lexer.Lexer) *Parser {
 	p := &Parser{
 		l:      l,
+		Strs:   []string{},
 		errors: []string{},
 	}
 
 	p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
 	p.registerPrefix(token.STRING, p.parseStringLiteral)
 	p.registerPrefix(token.INT, p.parseIntegerLiteral)
+	p.registerPrefix(token.IDENT, p.parseIdent)
 
 	p.infixParseFns = make(map[token.TokenType]infixParseFn)
 	p.registerInfix(token.PLUS, p.parseInfixExpression)
@@ -79,6 +82,25 @@ func New(l *lexer.Lexer) *Parser {
 func (p *Parser) nextToken() {
 	p.curToken = p.peekToken
 	p.peekToken = p.l.NextToken()
+}
+
+// peekTokenの型をチェックし、その型が正しい場合に限ってnextTokenを読んで、トークンを進める
+func (p *Parser) expectPeek(t token.TokenType) bool {
+	if p.peekTokenIs(t) {
+		p.nextToken()
+		return true
+	} else {
+		p.peekError(t)
+		return false
+	}
+}
+
+func (p *Parser) peekError(t token.TokenType) {
+	msg := fmt.Sprintf("expected next token to be %s, got %s instead",
+		t,
+		p.peekToken.Type,
+	)
+	p.errors = append(p.errors, msg)
 }
 
 func (p *Parser) peekPrecedence() int {
@@ -129,9 +151,19 @@ func (p *Parser) registerInfix(tokenType token.TokenType, fn infixParseFn) {
 // 文は代入とか、ifの実行文とか(条件部分は式)、返り値がないもの
 func (p *Parser) parseStatement() ast.Statement {
 	switch p.curToken.Type {
-	default:
-		return p.parseExpressionStatement()
+	case token.IDENT:
+		// TODO: 型をテーブルから参照する
+		if p.curToken.Literal == token.CTYPE_VOID ||
+			p.curToken.Literal == token.CTYPE_INT ||
+			p.curToken.Literal == token.CTYPE_CHAR ||
+			p.curToken.Literal == token.CTYPE_STR {
+			decl := p.parseDeclStatement()
+			if decl != nil {
+				return decl
+			}
+		}
 	}
+	return p.parseExpressionStatement()
 }
 
 // 式文
@@ -143,11 +175,32 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 	return stmt
 }
 
+// int a = 1
+func (p *Parser) parseDeclStatement() *ast.DeclStatement {
+	stmt := &ast.DeclStatement{Token: p.curToken}
+
+	if !p.expectPeek(token.IDENT) {
+		return nil
+	}
+
+	stmt.Name = &ast.Identifier{Token: p.curToken}
+
+	if !p.expectPeek(token.ASSIGN) {
+		return nil
+	}
+
+	p.nextToken()
+	stmt.Value = p.parseExpression(LOWEST)
+	return stmt
+}
+
 // 式をパースする。現在位置に対応したパース関数を適用してASTを返す
 func (p *Parser) parseExpression(precedence int) ast.Expression {
 	// 前置構文
 	prefix := p.prefixParseFns[p.curToken.Type]
 	if prefix == nil {
+		msg := fmt.Sprintf("no prefix parse function for %s found", p.curToken.Type)
+		p.errors = append(p.errors, msg)
 		return nil
 	}
 	leftExp := prefix()
@@ -166,7 +219,10 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 }
 
 func (p *Parser) parseStringLiteral() ast.Expression {
-	return &ast.StringLiteral{Token: p.curToken, Value: p.curToken.Literal}
+	id := len(p.Strs)
+	strlit := &ast.StringLiteral{Token: p.curToken, Value: p.curToken.Literal, ID: id}
+	p.Strs = append(p.Strs, strlit.Value)
+	return strlit
 }
 
 func (p *Parser) parseIntegerLiteral() ast.Expression {
@@ -181,6 +237,11 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 
 	lit.Value = value
 	return lit
+}
+
+func (p *Parser) parseIdent() ast.Expression {
+	ident := &ast.Identifier{Token: p.curToken}
+	return ident
 }
 
 func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
