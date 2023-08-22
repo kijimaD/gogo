@@ -261,6 +261,9 @@ func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 	return expression
 }
 
+// 関数呼び出しは"("を真ん中とする中置構文。
+// <f><(><args>
+// 前  中  後
 func (p *Parser) parseCallExpression(function ast.Expression) ast.Expression {
 	exp := &ast.FuncallExpression{Token: p.curToken, Function: function}
 	exp.Args = p.parseExpressionList(token.RPAREN)

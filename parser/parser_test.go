@@ -200,68 +200,94 @@ func TestParseExpression(t *testing.T) {
 // 優先順位が正しいか
 func TestParsePrecedence(t *testing.T) {
 	tests := []struct {
-		input  string
-		expect interface{}
+		input     string
+		expect    interface{}
+		expectLen int
 	}{
 		{
 			`1 + 2 - 3`,
 			`((1 + 2) - 3)`,
+			1,
 		},
 		{
 			`1 - 2 + 3`,
 			`((1 - 2) + 3)`,
+			1,
 		},
 		{
 			`1 + 2 * 3`,
 			`(1 + (2 * 3))`,
+			1,
 		},
 		{
 			`1 + 2 / 3`,
 			`(1 + (2 / 3))`,
+			1,
 		},
 		{
 			`1 * 2 / 3`,
 			`((1 * 2) / 3)`,
+			1,
 		},
 		{
 			`1 + 2; 3 / 4`,
 			`(1 + 2)(3 / 4)`,
+			2,
 		},
 		{
 			`1; 2 * 3`,
 			`1(2 * 3)`,
+			2,
 		},
 		{
 			`int a = 1`,
 			`(int a = 1)`,
+			1,
 		},
 		{
 			`int a = 1+2`,
 			`(int a = (1 + 2))`,
+			1,
 		},
 		{
 			`int a = 1+2*3`,
 			`(int a = (1 + (2 * 3)))`,
+			1,
 		},
 		{
 			`int a = 1; a+2*2`,
 			`(int a = 1)(a + (2 * 2))`,
+			2,
 		},
 		{
 			`string a = "str"`,
 			`(string a = "str")`,
+			1,
 		},
 		{
 			`f(1, 2)`,
 			`f(1, 2)`,
+			1,
 		},
 		{
 			`f(a, b, c, d, e)`,
 			`f(a, b, c, d, e)`,
+			1,
 		},
 		{
 			`f(1+1, 2)`,
 			`f((1 + 1), 2)`,
+			1,
+		},
+		{
+			`f1(1, 2)`,
+			`f1(1, 2)`,
+			1,
+		},
+		{
+			`sum5(1, 2)`,
+			`sum5(1, 2)`,
+			1,
 		},
 	}
 
@@ -271,7 +297,9 @@ func TestParsePrecedence(t *testing.T) {
 		pg := p.ParseProgram()
 		checkParserErrors(t, p)
 		actual := pg.String()
+
 		assert.Equal(t, tt.expect, actual)
+		assert.Equal(t, tt.expectLen, len(pg.Statements))
 	}
 }
 

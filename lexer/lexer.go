@@ -132,10 +132,13 @@ func (l *Lexer) readNumber() string {
 	return l.input[startPos:l.position]
 }
 
+// identの最初の文字はアルファベットでないといけない。2文字目からは数字が使える
 func (l *Lexer) readIdentifier() string {
 	startPos := l.position
-	for isLetter(l.ch) {
-		l.readChar()
+	if isLetter(l.ch) {
+		for isLetter(l.ch) || isDigit(l.ch) {
+			l.readChar()
+		}
 	}
 	return l.input[startPos:l.position]
 }

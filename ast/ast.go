@@ -122,7 +122,7 @@ func (de *DeclStatement) String() string {
 
 // f(20, 5)
 type FuncallExpression struct {
-	Token    token.Token
+	Token    token.Token // "("
 	Function Expression
 	Args     []Expression
 }
@@ -135,7 +135,6 @@ func (fe *FuncallExpression) String() string {
 	for _, a := range fe.Args {
 		args = append(args, a.String())
 	}
-
 	out.WriteString(fe.Function.String())
 	out.WriteString("(")
 	out.WriteString(strings.Join(args, ", "))

@@ -15,6 +15,8 @@ var varPos = 1
 // 変数の位置をアセンブリコードの中で正しいメモリアドレスに変換するための定数。1つの変数は4バイトに格納されている
 const varWidth = 4
 
+var regs = []string{"rdi", "rsi", "rdx", "rcx", "r8", "r9"}
+
 func emitBinop(env *object.Environment, i ast.InfixExpression) {
 	var op string
 	switch i.Operator {
@@ -87,5 +89,21 @@ func EmitExpr(env *object.Environment, node ast.Node) {
 		evalIdentifier(env, n)
 	case *ast.InfixExpression:
 		emitBinop(env, *n)
+	case *ast.FuncallExpression:
+		for i := 1; i < len(n.Args); i++ {
+			fmt.Printf("push %%%s\n\t", regs[i])
+		}
+		for i := 0; i < len(n.Args); i++ {
+			EmitExpr(env, n.Args[i])
+			fmt.Printf("push %%rax\n\t")
+		}
+		for i := len(n.Args) - 1; i >= 0; i-- {
+			fmt.Printf("pop %%%s\n\t", regs[i])
+		}
+		fmt.Printf("mov $0, %%eax\n\t")
+		fmt.Printf("call %s\n\t", n.Function.String())
+		for i := len(n.Args) - 1; i > 0; i-- {
+			fmt.Printf("pop %%%s\n\t", regs[i])
+		}
 	}
 }

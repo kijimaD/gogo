@@ -103,6 +103,7 @@ a;
 abc;
 a + b;
 42a;
+a42;
 f(1);
 `
 
@@ -153,6 +154,9 @@ f(1);
 		{token.SEMICOLON, ";"},
 
 		{token.ILLEGAL, "a"},
+		{token.SEMICOLON, ";"},
+
+		{token.IDENT, "a42"},
 		{token.SEMICOLON, ";"},
 
 		{token.IDENT, "f"},
