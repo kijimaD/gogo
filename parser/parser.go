@@ -44,6 +44,7 @@ const (
 	LOWEST
 	SUM
 	PRODUCT
+	CALL
 )
 
 var precedences = map[token.TokenType]int{
@@ -51,6 +52,7 @@ var precedences = map[token.TokenType]int{
 	token.MINUS:    SUM,
 	token.ASTERISK: PRODUCT,
 	token.SLASH:    PRODUCT,
+	token.LPAREN:   CALL,
 }
 
 func New(l *lexer.Lexer) *Parser {
@@ -70,6 +72,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.MINUS, p.parseInfixExpression)
 	p.registerInfix(token.ASTERISK, p.parseInfixExpression)
 	p.registerInfix(token.SLASH, p.parseInfixExpression)
+	p.registerInfix(token.LPAREN, p.parseCallExpression)
 
 	// 2つトークンを読み込む。curTokenとpeekTokenの両方がセットされる
 	p.nextToken()
@@ -256,4 +259,39 @@ func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 	expression.Right = p.parseExpression(precedence) // 右側を評価する
 
 	return expression
+}
+
+// 関数呼び出しは"("を真ん中とする中置構文。
+// <f><(><args>
+// 前  中  後
+func (p *Parser) parseCallExpression(function ast.Expression) ast.Expression {
+	exp := &ast.FuncallExpression{Token: p.curToken, Function: function}
+	exp.Args = p.parseExpressionList(token.RPAREN)
+	return exp
+}
+
+func (p *Parser) parseExpressionList(end token.TokenType) []ast.Expression {
+	list := []ast.Expression{}
+
+	// リストの終端が来たら、次に進んで終了
+	if p.peekTokenIs(end) {
+		p.nextToken()
+		return list
+	}
+
+	p.nextToken()
+	list = append(list, p.parseExpression(LOWEST))
+
+	// 次のトークンがコンマのときだけ繰り返すので、リストの最後の要素で止まる
+	for p.peekTokenIs(token.COMMA) {
+		p.nextToken() // [1<,> 2]
+		p.nextToken() // [1, <2>]
+		list = append(list, p.parseExpression(LOWEST))
+	}
+
+	if !p.expectPeek(end) {
+		return nil
+	}
+
+	return list
 }
