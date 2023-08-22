@@ -45,6 +45,12 @@ func (l *Lexer) NextToken() token.Token {
 		tok = newToken(token.SEMICOLON, l.ch)
 	case '=':
 		tok = newToken(token.ASSIGN, l.ch)
+	case ',':
+		tok = newToken(token.COMMA, l.ch)
+	case '(':
+		tok = newToken(token.LPAREN, l.ch)
+	case ')':
+		tok = newToken(token.RPAREN, l.ch)
 	case 0:
 		// 終端文字
 		tok.Literal = ""
@@ -88,6 +94,15 @@ func (l *Lexer) readChar() {
 	}
 	l.position = l.readPosition
 	l.readPosition += 1
+}
+
+// のぞき見(peek)。readChar()の、文字解析器を進めずないバージョン。先読みだけを行う
+func (l *Lexer) peekChar() byte {
+	if l.readPosition >= len(l.input) {
+		return 0
+	} else {
+		return l.input[l.readPosition] // 次の位置を返す
+	}
 }
 
 // 文字列をすべて読んで、次の非文字列の領域に現在地を進める

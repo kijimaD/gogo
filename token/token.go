@@ -22,6 +22,9 @@ const (
 	INT       = "INT"
 	STRING    = "STRING"
 	SEMICOLON = ";"
+	COMMA     = ","
+	LPAREN    = "("
+	RPAREN    = ")"
 )
 
 const (

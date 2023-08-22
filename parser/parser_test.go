@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/kijimaD/gogo/ast"
@@ -250,6 +251,18 @@ func TestParsePrecedence(t *testing.T) {
 			`string a = "str"`,
 			`(string a = "str")`,
 		},
+		{
+			`f(1, 2)`,
+			`f(1, 2)`,
+		},
+		{
+			`f(a, b, c, d, e)`,
+			`f(a, b, c, d, e)`,
+		},
+		{
+			`f(1+1, 2)`,
+			`f((1 + 1), 2)`,
+		},
 	}
 
 	for _, tt := range tests {
@@ -270,4 +283,31 @@ func TestNextToken(t *testing.T) {
 	assert.Equal(t, expectCur, p.curToken)
 	expectPeek := token.Token{Type: "EOF", Literal: ""}
 	assert.Equal(t, expectPeek, p.peekToken)
+}
+
+func TestParseExpressionList(t *testing.T) {
+	tests := []struct {
+		input  string
+		expect string
+	}{
+		{`(1,2,3)`, "1, 2, 3"},
+		{`(1, 2, 3)`, "1, 2, 3"},
+		{`(1+1,2,3)`, "(1 + 1), 2, 3"},
+		{`(1,2,3`, ""},
+		{`1,2,3)`, ""},
+		{`()`, ""},
+	}
+
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		list := p.parseExpressionList(token.RPAREN)
+
+		results := []string{}
+		for _, e := range list {
+			results = append(results, e.String())
+		}
+
+		assert.Equal(t, tt.expect, strings.Join(results, ", "))
+	}
 }

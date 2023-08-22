@@ -2,6 +2,7 @@ package ast
 
 import (
 	"bytes"
+	"strings"
 
 	"github.com/kijimaD/gogo/token"
 )
@@ -114,6 +115,30 @@ func (de *DeclStatement) String() string {
 	out.WriteString(de.TokenLiteral() + " " + de.Name.Token.Literal)
 	out.WriteString(" = ")
 	out.WriteString(de.Value.String())
+	out.WriteString(")")
+
+	return out.String()
+}
+
+// f(20, 5)
+type FuncallExpression struct {
+	Token    token.Token
+	Function Expression
+	Args     []Expression
+}
+
+func (fe *FuncallExpression) ExpressionNode()      {}
+func (fe *FuncallExpression) TokenLiteral() string { return fe.Token.Literal }
+func (fe *FuncallExpression) String() string {
+	var out bytes.Buffer
+	args := []string{}
+	for _, a := range fe.Args {
+		args = append(args, a.String())
+	}
+
+	out.WriteString(fe.Function.String())
+	out.WriteString("(")
+	out.WriteString(strings.Join(args, ", "))
 	out.WriteString(")")
 
 	return out.String()
