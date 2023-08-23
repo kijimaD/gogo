@@ -94,6 +94,11 @@ func TestParsePrim(t *testing.T) {
 			`"hello""world"`,
 			2,
 		},
+		{
+			`'h'`,
+			`'h'`,
+			1,
+		},
 	}
 
 	for _, tt := range tests {

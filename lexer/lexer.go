@@ -33,6 +33,11 @@ func (l *Lexer) NextToken() token.Token {
 			tok = newToken(token.ILLEGAL, l.ch)
 		}
 		tok.Literal = literal
+	case '\'':
+		tok.Type = token.CHAR
+		l.readChar() // 左のシングルクォートを飛ばす
+		tok.Literal = string(l.ch)
+		l.readChar() // 右のシングルクォートを飛ばす
 	case '+':
 		tok = newToken(token.PLUS, l.ch)
 	case '-':

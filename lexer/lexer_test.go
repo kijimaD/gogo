@@ -98,6 +98,7 @@ func TestNextToken(t *testing.T) {
 7 - 8;
 a = 1;
 "hello";
+'c';
 	1  ;
 a;
 abc;
@@ -137,6 +138,9 @@ f(1);
 		{token.SEMICOLON, ";"},
 
 		{token.STRING, "hello"},
+		{token.SEMICOLON, ";"},
+
+		{token.CHAR, "c"},
 		{token.SEMICOLON, ";"},
 
 		{token.INT, "1"},

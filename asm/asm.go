@@ -85,6 +85,8 @@ func EmitExpr(env *object.Environment, node ast.Node) {
 		fmt.Printf("mov $%d, %%eax\n\t", int(n.Value))
 	case *ast.StringLiteral:
 		fmt.Printf("lea .s%d(%%rip), %%rax\n\t", n.ID)
+	case *ast.CharLiteral:
+		fmt.Printf("mov $%d, %%eax\n\t", n.Value)
 	case *ast.Identifier:
 		evalIdentifier(env, n)
 	case *ast.InfixExpression:
