@@ -78,6 +78,16 @@ func TestIllegal(t *testing.T) {
 			input:  `"not pair`,
 			expect: token.ILLEGAL,
 		},
+		{
+			name:   "シングルクォートのペアが合わない",
+			input:  `'not pair`,
+			expect: token.ILLEGAL,
+		},
+		{
+			name:   "シングルクォートに複数の文字",
+			input:  `'MULTIPLE CHAR'`,
+			expect: token.ILLEGAL,
+		},
 	}
 
 	for _, tt := range tests {

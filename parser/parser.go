@@ -230,11 +230,8 @@ func (p *Parser) parseStringLiteral() ast.Expression {
 }
 
 func (p *Parser) parseCharLiteral() ast.Expression {
-	var a ast.CharLiteral
 	runes := []rune(p.curToken.Literal)
-	for _, rune := range runes {
-		a = ast.CharLiteral{Token: p.curToken, Value: rune}
-	}
+	a := ast.CharLiteral{Token: p.curToken, Value: runes[0]}
 	return &a
 }
 
