@@ -78,6 +78,16 @@ func TestIllegal(t *testing.T) {
 			input:  `"not pair`,
 			expect: token.ILLEGAL,
 		},
+		{
+			name:   "シングルクォートのペアが合わない",
+			input:  `'not pair`,
+			expect: token.ILLEGAL,
+		},
+		{
+			name:   "シングルクォートに複数の文字",
+			input:  `'MULTIPLE CHAR'`,
+			expect: token.ILLEGAL,
+		},
 	}
 
 	for _, tt := range tests {
@@ -98,6 +108,7 @@ func TestNextToken(t *testing.T) {
 7 - 8;
 a = 1;
 "hello";
+'c';
 	1  ;
 a;
 abc;
@@ -137,6 +148,9 @@ f(1);
 		{token.SEMICOLON, ";"},
 
 		{token.STRING, "hello"},
+		{token.SEMICOLON, ";"},
+
+		{token.CHAR, "c"},
 		{token.SEMICOLON, ";"},
 
 		{token.INT, "1"},

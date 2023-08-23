@@ -33,6 +33,18 @@ func (l *Lexer) NextToken() token.Token {
 			tok = newToken(token.ILLEGAL, l.ch)
 		}
 		tok.Literal = literal
+	case '\'':
+		tok.Type = token.CHAR
+		if l.ch == '\'' {
+			l.readChar() // 左のシングルクォートを飛ばす <'>a'
+		} else {
+			tok = newToken(token.ILLEGAL, l.ch)
+		}
+		tok.Literal = string(l.ch)
+		l.readChar() // 本体を飛ばす '<a>'
+		if l.ch != '\'' {
+			tok = newToken(token.ILLEGAL, l.ch)
+		}
 	case '+':
 		tok = newToken(token.PLUS, l.ch)
 	case '-':

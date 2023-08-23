@@ -94,6 +94,11 @@ func TestParsePrim(t *testing.T) {
 			`"hello""world"`,
 			2,
 		},
+		{
+			`'h'`,
+			`'h'`,
+			1,
+		},
 	}
 
 	for _, tt := range tests {
@@ -115,8 +120,9 @@ func TestParseProgramIllegal(t *testing.T) {
 		input string
 	}{
 		{`"unbalance quote`},
-		{`42a`}, // 数値から始まる識別子
-		{`1+`},  // 中置演算子の右側がない
+		{`42a`},        // 数値から始まる識別子
+		{`1+`},         // 中置演算子の右側がない
+		{`'MULTIPLE'`}, // charリテラルに複数の文字
 	}
 
 	for _, tt := range tests {

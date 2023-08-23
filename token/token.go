@@ -21,6 +21,7 @@ const (
 
 	INT       = "INT"
 	STRING    = "STRING"
+	CHAR      = "CHAR"
 	SEMICOLON = ";"
 	COMMA     = ","
 	LPAREN    = "("

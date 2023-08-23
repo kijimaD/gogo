@@ -58,6 +58,7 @@ test 1 '1+1/2'
 test 8 '3+4/2+3'
 test 18 '3*4/2*3'
 test 3 '24/2/4'
+test 98 "'a'+1;"
 test 2 'int a = 2;a;'
 test 3 'int a = 2;a;3'
 test 4 'int a = 1+1; a+2'
