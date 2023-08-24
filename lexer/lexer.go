@@ -28,7 +28,7 @@ func (l *Lexer) NextToken() token.Token {
 	switch l.ch {
 	case '"':
 		tok.Type = token.STRING
-		err, literal := l.readString()
+		literal, err := l.readString()
 		if err != nil {
 			tok = newToken(token.ILLEGAL, l.ch)
 		}
@@ -93,7 +93,7 @@ func (l *Lexer) NextToken() token.Token {
 }
 
 // 文字列をすべて読んで、次の非文字列の領域に現在地を進める
-func (l *Lexer) readString() (error, string) {
+func (l *Lexer) readString() (string, error) {
 	startPos := l.position + 1
 	for {
 		l.readChar()
@@ -103,13 +103,12 @@ func (l *Lexer) readString() (error, string) {
 
 		// ダブルクォートがペアにならずに終端するとエラー
 		if l.ch == 0 {
-			return fmt.Errorf("unexpected EOF"), ""
+			return "", fmt.Errorf("unexpected EOF")
 		}
 	}
-	return nil, l.input[startPos:l.position]
+	return l.input[startPos:l.position], nil
 }
 
-// 数字をすべて読んで、次の非数字の領域に現在地を進める
 // charリテラルを読む
 func (l *Lexer) readCharLit() (byte, error) {
 	if l.ch == '\'' {
@@ -125,6 +124,8 @@ func (l *Lexer) readCharLit() (byte, error) {
 
 	return result, nil
 }
+
+// 数字を読んで、次の非数字の領域に現在地を進める
 // "1+2" 1で実行したとき、現在地を+にすすめる
 func (l *Lexer) readNumber() string {
 	startPos := l.position

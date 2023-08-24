@@ -18,14 +18,14 @@ func TestReadChar(t *testing.T) {
 
 func TestReadString(t *testing.T) {
 	l := New(`"hello" "world"`)
-	_, actual := l.readString()
+	actual, _ := l.readString()
 	expect := "hello"
 	assert.Equal(t, expect, actual)
 
 	l.readChar()
 	l.readChar()
 
-	_, actual = l.readString()
+	actual, _ = l.readString()
 	expect = "world"
 	assert.Equal(t, expect, actual)
 }
@@ -33,7 +33,7 @@ func TestReadString(t *testing.T) {
 // ダブルクォートのペアがあっていない場合はエラー
 func TestReadStringFail(t *testing.T) {
 	l := New(`"hello`)
-	err, actual := l.readString()
+	actual, err := l.readString()
 
 	expect := ``
 	assert.Equal(t, expect, actual)
