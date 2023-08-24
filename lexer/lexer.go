@@ -35,16 +35,11 @@ func (l *Lexer) NextToken() token.Token {
 		tok.Literal = literal
 	case '\'':
 		tok.Type = token.CHAR
-		if l.ch == '\'' {
-			l.readChar() // 左のシングルクォートを飛ばす <'>a'
-		} else {
+		lit, err := l.readCharLit()
+		if err != nil {
 			tok = newToken(token.ILLEGAL, l.ch)
 		}
-		tok.Literal = string(l.ch)
-		l.readChar() // 本体を飛ばす '<a>'
-		if l.ch != '\'' {
-			tok = newToken(token.ILLEGAL, l.ch)
-		}
+		tok.Literal = string(lit)
 	case '+':
 		tok = newToken(token.PLUS, l.ch)
 	case '-':
@@ -115,6 +110,21 @@ func (l *Lexer) readString() (error, string) {
 }
 
 // 数字をすべて読んで、次の非数字の領域に現在地を進める
+// charリテラルを読む
+func (l *Lexer) readCharLit() (byte, error) {
+	if l.ch == '\'' {
+		l.readChar() // 左のシングルクォートを飛ばす <'>a'
+	} else {
+		return 0, fmt.Errorf("invalid char")
+	}
+	result := l.ch
+	l.readChar() // 本体を飛ばす '<a>'
+	if l.ch != '\'' {
+		return 0, fmt.Errorf("invalid char")
+	}
+
+	return result, nil
+}
 // "1+2" 1で実行したとき、現在地を+にすすめる
 func (l *Lexer) readNumber() string {
 	startPos := l.position
