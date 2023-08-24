@@ -10,7 +10,6 @@ import (
 	"os"
 
 	"github.com/kijimaD/gogo/asm"
-	"github.com/kijimaD/gogo/ast"
 	"github.com/kijimaD/gogo/lexer"
 	"github.com/kijimaD/gogo/object"
 	"github.com/kijimaD/gogo/parser"
@@ -39,17 +38,7 @@ func main() {
 	fmt.Printf("mymain:\n\t")
 
 	for _, stmt := range prog.Statements {
-		switch s := stmt.(type) {
-		case *ast.ExpressionStatement:
-			exp := s.Expression
-			asm.EmitExpr(env, exp)
-		case *ast.DeclStatement:
-			exp := s.Value
-			asm.EmitExpr(env, exp)
-			asm.EvalDeclStmt(env, s)
-		default:
-			log.Fatal("not support statement:", s)
-		}
+		asm.EmitStmt(env, stmt)
 	}
 	fmt.Printf("ret\n")
 }

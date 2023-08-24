@@ -28,23 +28,18 @@ func (l *Lexer) NextToken() token.Token {
 	switch l.ch {
 	case '"':
 		tok.Type = token.STRING
-		err, literal := l.readString()
+		literal, err := l.readString()
 		if err != nil {
 			tok = newToken(token.ILLEGAL, l.ch)
 		}
 		tok.Literal = literal
 	case '\'':
 		tok.Type = token.CHAR
-		if l.ch == '\'' {
-			l.readChar() // 左のシングルクォートを飛ばす <'>a'
-		} else {
+		lit, err := l.readCharLit()
+		if err != nil {
 			tok = newToken(token.ILLEGAL, l.ch)
 		}
-		tok.Literal = string(l.ch)
-		l.readChar() // 本体を飛ばす '<a>'
-		if l.ch != '\'' {
-			tok = newToken(token.ILLEGAL, l.ch)
-		}
+		tok.Literal = string(lit)
 	case '+':
 		tok = newToken(token.PLUS, l.ch)
 	case '-':
@@ -97,28 +92,8 @@ func (l *Lexer) NextToken() token.Token {
 	return tok
 }
 
-// 次の1文字を読んでinput文字列の現在位置を進める
-func (l *Lexer) readChar() {
-	if l.readPosition >= len(l.input) {
-		l.ch = 0 // ASCIIコードの"NUL"文字に対応している
-	} else {
-		l.ch = l.input[l.readPosition]
-	}
-	l.position = l.readPosition
-	l.readPosition += 1
-}
-
-// のぞき見(peek)。readChar()の、文字解析器を進めずないバージョン。先読みだけを行う
-func (l *Lexer) peekChar() byte {
-	if l.readPosition >= len(l.input) {
-		return 0
-	} else {
-		return l.input[l.readPosition] // 次の位置を返す
-	}
-}
-
 // 文字列をすべて読んで、次の非文字列の領域に現在地を進める
-func (l *Lexer) readString() (error, string) {
+func (l *Lexer) readString() (string, error) {
 	startPos := l.position + 1
 	for {
 		l.readChar()
@@ -128,13 +103,29 @@ func (l *Lexer) readString() (error, string) {
 
 		// ダブルクォートがペアにならずに終端するとエラー
 		if l.ch == 0 {
-			return fmt.Errorf("unexpected EOF"), ""
+			return "", fmt.Errorf("unexpected EOF")
 		}
 	}
-	return nil, l.input[startPos:l.position]
+	return l.input[startPos:l.position], nil
 }
 
-// 数字をすべて読んで、次の非数字の領域に現在地を進める
+// charリテラルを読む
+func (l *Lexer) readCharLit() (byte, error) {
+	if l.ch == '\'' {
+		l.readChar() // 左のシングルクォートを飛ばす <'>a'
+	} else {
+		return 0, fmt.Errorf("invalid char")
+	}
+	result := l.ch
+	l.readChar() // 本体を飛ばす '<a>'
+	if l.ch != '\'' {
+		return 0, fmt.Errorf("invalid char")
+	}
+
+	return result, nil
+}
+
+// 数字を読んで、次の非数字の領域に現在地を進める
 // "1+2" 1で実行したとき、現在地を+にすすめる
 func (l *Lexer) readNumber() string {
 	startPos := l.position
@@ -153,25 +144,6 @@ func (l *Lexer) readIdentifier() string {
 		}
 	}
 	return l.input[startPos:l.position]
-}
-
-func (l *Lexer) skipSpace() {
-	for l.ch == ' ' || l.ch == '\n' || l.ch == '\t' {
-		l.readChar()
-	}
-}
-
-// 数字か判定する
-func isDigit(ch byte) bool {
-	return '0' <= ch && ch <= '9'
-}
-
-func isLetter(ch byte) bool {
-	return ('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z')
-}
-
-func isSpace(ch byte) bool {
-	return ch == ' '
 }
 
 func newToken(tokenType token.TokenType, ch byte) token.Token {
