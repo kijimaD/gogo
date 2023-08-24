@@ -97,26 +97,6 @@ func (l *Lexer) NextToken() token.Token {
 	return tok
 }
 
-// 次の1文字を読んでinput文字列の現在位置を進める
-func (l *Lexer) readChar() {
-	if l.readPosition >= len(l.input) {
-		l.ch = 0 // ASCIIコードの"NUL"文字に対応している
-	} else {
-		l.ch = l.input[l.readPosition]
-	}
-	l.position = l.readPosition
-	l.readPosition += 1
-}
-
-// のぞき見(peek)。readChar()の、文字解析器を進めずないバージョン。先読みだけを行う
-func (l *Lexer) peekChar() byte {
-	if l.readPosition >= len(l.input) {
-		return 0
-	} else {
-		return l.input[l.readPosition] // 次の位置を返す
-	}
-}
-
 // 文字列をすべて読んで、次の非文字列の領域に現在地を進める
 func (l *Lexer) readString() (error, string) {
 	startPos := l.position + 1
@@ -153,25 +133,6 @@ func (l *Lexer) readIdentifier() string {
 		}
 	}
 	return l.input[startPos:l.position]
-}
-
-func (l *Lexer) skipSpace() {
-	for l.ch == ' ' || l.ch == '\n' || l.ch == '\t' {
-		l.readChar()
-	}
-}
-
-// 数字か判定する
-func isDigit(ch byte) bool {
-	return '0' <= ch && ch <= '9'
-}
-
-func isLetter(ch byte) bool {
-	return ('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z')
-}
-
-func isSpace(ch byte) bool {
-	return ch == ' '
 }
 
 func newToken(tokenType token.TokenType, ch byte) token.Token {
