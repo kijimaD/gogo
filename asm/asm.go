@@ -33,23 +33,23 @@ func emitBinop(env *object.Environment, i ast.InfixExpression) {
 	}
 
 	if i.Operator == token.SLASH {
-		EmitExpr(env, i.Left)
+		emitExpr(env, i.Left)
 		fmt.Printf("push %%rax\n\t")
-		EmitExpr(env, i.Right)
+		emitExpr(env, i.Right)
 		fmt.Printf("mov %%eax, %%ebx\n\t")
 		fmt.Printf("pop %%rax\n\t")
 		fmt.Printf("mov $0, %%edx\n\t")
 		fmt.Printf("idiv %%ebx\n\t")
 	} else {
-		EmitExpr(env, i.Right)
+		emitExpr(env, i.Right)
 		fmt.Printf("push %%rax\n\t")
-		EmitExpr(env, i.Left)
+		emitExpr(env, i.Left)
 		fmt.Printf("pop %%rbx\n\t")
 		fmt.Printf("%s %%ebx, %%eax\n\t", op)
 	}
 }
 
-func EvalDeclStmt(e *object.Environment, ds *ast.DeclStatement) {
+func emitDeclStmt(e *object.Environment, ds *ast.DeclStatement) {
 	obj := &object.String{Value: ds.Name.Token.Literal, Pos: varPos}
 	e.Set(ds.Name.Token.Literal, obj)
 	fmt.Printf("mov %%eax, -%d(%%rbp)\n\t", varPos*varWidth)
@@ -79,7 +79,21 @@ func EmitDataSection(p *parser.Parser) {
 	fmt.Printf("\t")
 }
 
-func EmitExpr(env *object.Environment, node ast.Node) {
+func EmitStmt(env *object.Environment, stmt ast.Statement) {
+	switch s := stmt.(type) {
+	case *ast.ExpressionStatement:
+		exp := s.Expression
+		emitExpr(env, exp)
+	case *ast.DeclStatement:
+		exp := s.Value
+		emitExpr(env, exp)
+		emitDeclStmt(env, s)
+	default:
+		log.Fatal("not support statement:", s)
+	}
+}
+
+func emitExpr(env *object.Environment, node ast.Node) {
 	switch n := node.(type) {
 	case *ast.IntegerLiteral:
 		fmt.Printf("mov $%d, %%eax\n\t", int(n.Value))
@@ -96,7 +110,7 @@ func EmitExpr(env *object.Environment, node ast.Node) {
 			fmt.Printf("push %%%s\n\t", regs[i])
 		}
 		for i := 0; i < len(n.Args); i++ {
-			EmitExpr(env, n.Args[i])
+			emitExpr(env, n.Args[i])
 			fmt.Printf("push %%rax\n\t")
 		}
 		for i := len(n.Args) - 1; i >= 0; i-- {
