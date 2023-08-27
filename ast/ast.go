@@ -41,6 +41,7 @@ func (p *Program) String() string {
 
 type Identifier struct {
 	Token token.Token
+	Pos   int
 }
 
 func (i *Identifier) ExpressionNode()      {}
@@ -115,6 +116,7 @@ type DeclStatement struct {
 	Ctype string
 	Name  *Identifier
 	Value Expression
+	Pos   int
 }
 
 func (de *DeclStatement) statementNode()       {}

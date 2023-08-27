@@ -80,7 +80,7 @@ func (l *Lexer) NextToken() token.Token {
 		} else if isLetter(l.ch) {
 			tok.Literal = l.readIdentifier()
 			tok.Type = token.IDENT
-			// TODO: ここでIDENTを組み込みのものか判断すればよさそう
+			// TODO: ここでIDENTが組み込みのものか判断すればよさそう
 			return tok
 		} else {
 			tok = newToken(token.ILLEGAL, l.ch)

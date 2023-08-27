@@ -131,7 +131,6 @@ func TestParseProgramIllegal(t *testing.T) {
 		_ = p.ParseProgram()
 		assertParserErrors(t, p)
 	}
-
 }
 
 func TestParseInfixExpression(t *testing.T) {
@@ -276,9 +275,9 @@ func TestParsePrecedence(t *testing.T) {
 			1,
 		},
 		{
-			`f(a, b, c, d, e)`,
-			`f(a, b, c, d, e)`,
-			1,
+			`int a = 1; int b = 2; f(a, b)`,
+			`(int a = 1)(int b = 2)f(a, b)`,
+			3,
 		},
 		{
 			`f(1+1, 2)`,

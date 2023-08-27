@@ -7,6 +7,7 @@ import (
 
 	"github.com/kijimaD/gogo/ast"
 	"github.com/kijimaD/gogo/lexer"
+	"github.com/kijimaD/gogo/object"
 	"github.com/kijimaD/gogo/token"
 )
 
@@ -22,6 +23,7 @@ type Parser struct {
 
 	Strs   []string // 定義済みの文字列一覧。ラベルの定義に使う。スタックに入っているので、位置が必要
 	errors []string
+	Env    *object.Environment // パーサーから移動させたほうがいいかもしれない
 }
 
 func (p *Parser) Errors() []string {
@@ -61,6 +63,7 @@ func New(l *lexer.Lexer) *Parser {
 		l:      l,
 		Strs:   []string{},
 		errors: []string{},
+		Env:    object.NewEnvironment(),
 	}
 
 	p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
@@ -194,6 +197,11 @@ func (p *Parser) parseDeclStatement() *ast.DeclStatement {
 
 	p.nextToken()
 	declstmt.Value = p.parseExpression(LOWEST)
+	declstmt.Pos = p.Env.VarPos
+
+	obj := &object.String{Value: declstmt.Name.Token.Literal, Pos: p.Env.VarPos} // TODO: とりあえずstring。ctype型によって変える
+	p.Env.Set(declstmt.Name.Token.Literal, obj)
+
 	return declstmt
 }
 
@@ -248,7 +256,16 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 	return lit
 }
 
+// TODO: ident->varに変更する
+// token.identifierは関数呼び出しと変数評価で共用している。関数呼び出しのときは変数チェックはしない
 func (p *Parser) parseIdent() ast.Expression {
+	if !p.peekTokenIs(token.LPAREN) {
+		_, ok := p.Env.Get(p.curToken.Literal)
+		if !ok {
+			msg := fmt.Sprintf("not exist variable: %s", p.curToken.Literal)
+			p.errors = append(p.errors, msg)
+		}
+	}
 	ident := &ast.Identifier{Token: p.curToken}
 	return ident
 }

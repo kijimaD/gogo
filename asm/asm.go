@@ -5,7 +5,6 @@ import (
 	"log"
 
 	"github.com/kijimaD/gogo/ast"
-	"github.com/kijimaD/gogo/object"
 	"github.com/kijimaD/gogo/parser"
 	"github.com/kijimaD/gogo/token"
 )
@@ -17,7 +16,7 @@ const varWidth = 4
 
 var regs = []string{"rdi", "rsi", "rdx", "rcx", "r8", "r9"}
 
-func emitBinop(env *object.Environment, i ast.InfixExpression) {
+func emitBinop(i ast.InfixExpression) {
 	var op string
 	switch i.Operator {
 	case token.PLUS:
@@ -33,35 +32,29 @@ func emitBinop(env *object.Environment, i ast.InfixExpression) {
 	}
 
 	if i.Operator == token.SLASH {
-		emitExpr(env, i.Left)
+		emitExpr(i.Left)
 		fmt.Printf("push %%rax\n\t")
-		emitExpr(env, i.Right)
+		emitExpr(i.Right)
 		fmt.Printf("mov %%eax, %%ebx\n\t")
 		fmt.Printf("pop %%rax\n\t")
 		fmt.Printf("mov $0, %%edx\n\t")
 		fmt.Printf("idiv %%ebx\n\t")
 	} else {
-		emitExpr(env, i.Right)
+		emitExpr(i.Right)
 		fmt.Printf("push %%rax\n\t")
-		emitExpr(env, i.Left)
+		emitExpr(i.Left)
 		fmt.Printf("pop %%rbx\n\t")
 		fmt.Printf("%s %%ebx, %%eax\n\t", op)
 	}
 }
 
-func emitDeclStmt(e *object.Environment, ds *ast.DeclStatement) {
-	obj := &object.String{Value: ds.Name.Token.Literal, Pos: varPos}
-	e.Set(ds.Name.Token.Literal, obj)
-	fmt.Printf("mov %%eax, -%d(%%rbp)\n\t", varPos*varWidth)
-	varPos++
+func emitDeclStmt(ds *ast.DeclStatement) {
+	fmt.Printf("mov %%eax, -%d(%%rbp)\n\t", ds.Pos*varWidth)
 }
 
-func evalIdentifier(e *object.Environment, ident *ast.Identifier) {
-	result, ok := e.Get(ident.Token.Literal)
-	if !ok {
-		log.Fatal("not exist variable: ", ident.Token.Literal)
-	}
-	fmt.Printf("mov %%eax, -%d(%%rbp)\n\t", result.CurPos()*varWidth)
+// TODO: varに変える
+func evalIdentifier(ident *ast.Identifier) {
+	fmt.Printf("mov %%eax, -%d(%%rbp)\n\t", ident.Pos*varWidth)
 }
 
 // 定義した文字列にデータラベルをつける
@@ -79,21 +72,21 @@ func EmitDataSection(p *parser.Parser) {
 	fmt.Printf("\t")
 }
 
-func EmitStmt(env *object.Environment, stmt ast.Statement) {
+func EmitStmt(stmt ast.Statement) {
 	switch s := stmt.(type) {
 	case *ast.ExpressionStatement:
 		exp := s.Expression
-		emitExpr(env, exp)
+		emitExpr(exp)
 	case *ast.DeclStatement:
 		exp := s.Value
-		emitExpr(env, exp)
-		emitDeclStmt(env, s)
+		emitExpr(exp)
+		emitDeclStmt(s)
 	default:
 		log.Fatal("not support statement:", s)
 	}
 }
 
-func emitExpr(env *object.Environment, node ast.Node) {
+func emitExpr(node ast.Node) {
 	switch n := node.(type) {
 	case *ast.IntegerLiteral:
 		fmt.Printf("mov $%d, %%eax\n\t", int(n.Value))
@@ -102,15 +95,15 @@ func emitExpr(env *object.Environment, node ast.Node) {
 	case *ast.CharLiteral:
 		fmt.Printf("mov $%d, %%eax\n\t", n.Value)
 	case *ast.Identifier:
-		evalIdentifier(env, n)
+		evalIdentifier(n)
 	case *ast.InfixExpression:
-		emitBinop(env, *n)
+		emitBinop(*n)
 	case *ast.FuncallExpression:
 		for i := 1; i < len(n.Args); i++ {
 			fmt.Printf("push %%%s\n\t", regs[i])
 		}
 		for i := 0; i < len(n.Args); i++ {
-			emitExpr(env, n.Args[i])
+			emitExpr(n.Args[i])
 			fmt.Printf("push %%rax\n\t")
 		}
 		for i := len(n.Args) - 1; i >= 0; i-- {
