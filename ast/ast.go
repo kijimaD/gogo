@@ -39,14 +39,14 @@ func (p *Program) String() string {
 	return out.String()
 }
 
-type Identifier struct {
+type Var struct {
 	Token token.Token
 	Pos   int
 }
 
-func (i *Identifier) ExpressionNode()      {}
-func (i *Identifier) TokenLiteral() string { return i.Token.Literal }
-func (i *Identifier) String() string       { return i.Token.Literal }
+func (i *Var) ExpressionNode()      {}
+func (i *Var) TokenLiteral() string { return i.Token.Literal }
+func (i *Var) String() string       { return i.Token.Literal }
 
 type ExpressionStatement struct {
 	Token      token.Token // 式の最初のトークン
@@ -114,7 +114,7 @@ func (ie *InfixExpression) String() string {
 type DeclStatement struct {
 	Token token.Token
 	Ctype string
-	Name  *Identifier
+	Name  *Var
 	Value Expression
 	Pos   int
 }

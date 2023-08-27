@@ -53,8 +53,8 @@ func emitDeclStmt(ds *ast.DeclStatement) {
 }
 
 // TODO: varに変える
-func evalIdentifier(ident *ast.Identifier) {
-	fmt.Printf("mov %%eax, -%d(%%rbp)\n\t", ident.Pos*varWidth)
+func emitVar(v *ast.Var) {
+	fmt.Printf("mov %%eax, -%d(%%rbp)\n\t", v.Pos*varWidth)
 }
 
 // 定義した文字列にデータラベルをつける
@@ -94,8 +94,8 @@ func emitExpr(node ast.Node) {
 		fmt.Printf("lea .s%d(%%rip), %%rax\n\t", n.ID)
 	case *ast.CharLiteral:
 		fmt.Printf("mov $%d, %%eax\n\t", n.Value)
-	case *ast.Identifier:
-		evalIdentifier(n)
+	case *ast.Var:
+		emitVar(n)
 	case *ast.InfixExpression:
 		emitBinop(*n)
 	case *ast.FuncallExpression:

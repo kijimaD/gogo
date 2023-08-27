@@ -189,7 +189,7 @@ func (p *Parser) parseDeclStatement() *ast.DeclStatement {
 		return nil
 	}
 
-	declstmt.Name = &ast.Identifier{Token: p.curToken}
+	declstmt.Name = &ast.Var{Token: p.curToken}
 
 	if !p.expectPeek(token.ASSIGN) {
 		return nil
@@ -256,8 +256,7 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 	return lit
 }
 
-// TODO: ident->varに変更する
-// token.identifierは関数呼び出しと変数評価で共用している。関数呼び出しのときは変数チェックはしない
+// token.identifierを変数評価AST | それ以外ASTに分ける
 func (p *Parser) parseIdent() ast.Expression {
 	if !p.peekTokenIs(token.LPAREN) {
 		_, ok := p.Env.Get(p.curToken.Literal)
@@ -266,8 +265,9 @@ func (p *Parser) parseIdent() ast.Expression {
 			p.errors = append(p.errors, msg)
 		}
 	}
-	ident := &ast.Identifier{Token: p.curToken}
-	return ident
+	// 前置関数と中置関数の仕組みで、関数呼び出しの場合はここの返り値は使われることがない
+	a := &ast.Var{Token: p.curToken}
+	return a
 }
 
 func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
