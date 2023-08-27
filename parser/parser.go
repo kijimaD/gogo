@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"log"
 	"strconv"
 
 	"github.com/kijimaD/gogo/ast"
@@ -154,17 +155,9 @@ func (p *Parser) registerInfix(tokenType token.TokenType, fn infixParseFn) {
 // 文をパースする
 // 文は代入とか、ifの実行文とか(条件部分は式)、返り値がないもの
 func (p *Parser) parseStatement() ast.Statement {
-	switch p.curToken.Type {
-	case token.IDENT:
-		// TODO: 型をテーブルから参照する
-		if p.curToken.Literal == token.CTYPE_VOID ||
-			p.curToken.Literal == token.CTYPE_INT ||
-			p.curToken.Literal == token.CTYPE_CHAR ||
-			p.curToken.Literal == token.CTYPE_STR {
-			decl := p.parseDeclStatement()
-			if decl != nil {
-				return decl
-			}
+	if p.curToken.Type == token.IDENT && p.isCtypeKeyword() {
+		if decl := p.parseDeclStatement(); decl != nil {
+			return decl
 		}
 	}
 	return p.parseExpressionStatement()
@@ -181,21 +174,27 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 
 // int a = 1
 func (p *Parser) parseDeclStatement() *ast.DeclStatement {
-	stmt := &ast.DeclStatement{Token: p.curToken}
+	declstmt := &ast.DeclStatement{Token: p.curToken}
+
+	ctype, err := p.getIdentCtype()
+	if err != nil {
+		p.errors = append(p.errors, "failed get ident type")
+	}
+	declstmt.Ctype = ctype
 
 	if !p.expectPeek(token.IDENT) {
 		return nil
 	}
 
-	stmt.Name = &ast.Identifier{Token: p.curToken}
+	declstmt.Name = &ast.Identifier{Token: p.curToken}
 
 	if !p.expectPeek(token.ASSIGN) {
 		return nil
 	}
 
 	p.nextToken()
-	stmt.Value = p.parseExpression(LOWEST)
-	return stmt
+	declstmt.Value = p.parseExpression(LOWEST)
+	return declstmt
 }
 
 // 式をパースする。現在位置に対応したパース関数を適用してASTを返す
@@ -301,4 +300,31 @@ func (p *Parser) parseExpressionList(end token.TokenType) []ast.Expression {
 	}
 
 	return list
+}
+
+// identの型を判定する
+func (p *Parser) getIdentCtype() (string, error) {
+	if p.curToken.Type != token.IDENT {
+		return "", fmt.Errorf("%s is not ident", p.curToken.Type)
+	}
+
+	switch p.curToken.Literal {
+	case "int":
+		return token.CTYPE_INT, nil
+	case "char":
+		return token.CTYPE_CHAR, nil
+	case "string":
+		return token.CTYPE_STR, nil
+	default:
+		return "", nil
+	}
+}
+
+// 識別子が型か判定する
+func (p *Parser) isCtypeKeyword() bool {
+	ctype, err := p.getIdentCtype()
+	if err != nil {
+		log.Fatal(err)
+	}
+	return ctype != ""
 }

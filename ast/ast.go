@@ -23,7 +23,7 @@ type Expression interface {
 }
 
 // 構文解析器が生成する全てのASTのルートノードになる
-// 全ての有効なmonekyプログラムは、ひと続きの文の集まり
+// 全ての有効なプログラムは、ひと続きの文の集まり
 type Program struct {
 	Statements []Statement
 }
@@ -112,6 +112,7 @@ func (ie *InfixExpression) String() string {
 // int a = 1;
 type DeclStatement struct {
 	Token token.Token
+	Ctype string
 	Name  *Identifier
 	Value Expression
 }
