@@ -256,7 +256,7 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 	return lit
 }
 
-// token.identifierを変数評価AST | それ以外ASTに分ける
+// token.identifierをパースする。変数の場合は値が存在するかチェックする
 func (p *Parser) parseIdent() ast.Expression {
 	if !p.peekTokenIs(token.LPAREN) {
 		_, ok := p.Env.Get(p.curToken.Literal)
@@ -265,7 +265,7 @@ func (p *Parser) parseIdent() ast.Expression {
 			p.errors = append(p.errors, msg)
 		}
 	}
-	// 前置関数と中置関数の仕組みで、関数呼び出しの場合はここの返り値は使われることがない
+	// 前置関数と中置関数の仕組みで、処理しているトークンが関数呼び出しの場合はここの返り値は使われることがない
 	a := &ast.Var{Token: p.curToken}
 	return a
 }
