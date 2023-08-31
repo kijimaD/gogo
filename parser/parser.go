@@ -179,7 +179,7 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 func (p *Parser) parseDeclStatement() *ast.DeclStatement {
 	declstmt := &ast.DeclStatement{Token: p.curToken}
 
-	ctype, err := p.getIdentCtype()
+	ctype, err := p.getCtype()
 	if err != nil {
 		p.errors = append(p.errors, "failed get ident type")
 	}
@@ -273,13 +273,19 @@ func (p *Parser) parseIdent() ast.Expression {
 func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 	expression := &ast.InfixExpression{
 		Token:    p.curToken, // 現在のトークンは中置演算子の演算子
-		Operator: p.curToken.Literal,
 		Left:     left,
+		Operator: p.curToken.Literal,
 	}
 
 	precedence := p.curPrecedence()
 	p.nextToken()                                    // 中置演算子の右の引数に進む
 	expression.Right = p.parseExpression(precedence) // 右側を評価する
+
+	ctype, err := p.resultType(left, expression.Right)
+	if err != nil {
+		log.Fatal("type error")
+	}
+	expression.Ctype = ctype
 
 	return expression
 }
@@ -319,10 +325,10 @@ func (p *Parser) parseExpressionList(end token.TokenType) []ast.Expression {
 	return list
 }
 
-// identの型を判定する
-func (p *Parser) getIdentCtype() (string, error) {
+// 型宣言がどの型かを判定する
+func (p *Parser) getCtype() (token.Ctype, error) {
 	if p.curToken.Type != token.IDENT {
-		return "", fmt.Errorf("%s is not ident", p.curToken.Type)
+		return token.CTYPE_VOID, fmt.Errorf("%s is not ident", p.curToken.Type)
 	}
 
 	switch p.curToken.Literal {
@@ -333,15 +339,57 @@ func (p *Parser) getIdentCtype() (string, error) {
 	case "string":
 		return token.CTYPE_STR, nil
 	default:
-		return "", nil
+		return token.CTYPE_VOID, nil
 	}
 }
 
 // 識別子が型か判定する
 func (p *Parser) isCtypeKeyword() bool {
-	ctype, err := p.getIdentCtype()
+	ctype, err := p.getCtype()
 	if err != nil {
 		log.Fatal(err)
 	}
-	return ctype != ""
+	return ctype != token.CTYPE_VOID
+}
+
+func (p *Parser) resultType(a ast.Expression, b ast.Expression) (token.Ctype, error) {
+	small := a
+	big := b
+	incompatibleErr := fmt.Errorf("incompatible operands: %s and %s for %c", p.curToken, small, big)
+
+	if a.GetCtype() > b.GetCtype() {
+		small = b
+		big = a
+	}
+
+	switch small.GetCtype() {
+	case token.CTYPE_VOID:
+		return token.CTYPE_VOID, incompatibleErr
+	case token.CTYPE_INT:
+		switch big.GetCtype() {
+		case token.CTYPE_INT:
+			return token.CTYPE_INT, nil
+		case token.CTYPE_CHAR:
+			return token.CTYPE_INT, nil
+		case token.CTYPE_STR:
+			return token.CTYPE_VOID, incompatibleErr
+		default:
+			log.Fatal("unknown type")
+		}
+	case token.CTYPE_CHAR:
+		switch big.GetCtype() {
+		case token.CTYPE_CHAR:
+			return token.CTYPE_INT, nil
+		case token.CTYPE_STR:
+			return token.CTYPE_VOID, incompatibleErr
+		default:
+			log.Fatal("unknown type")
+		}
+	case token.CTYPE_STR:
+		log.Fatal("unknown type")
+	default:
+		log.Fatal("unknown type")
+	}
+
+	return token.CTYPE_VOID, incompatibleErr
 }

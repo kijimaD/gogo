@@ -20,6 +20,7 @@ type Statement interface {
 type Expression interface {
 	Node
 	ExpressionNode()
+	GetCtype() token.Ctype
 }
 
 // 構文解析器が生成する全てのASTのルートノードになる
@@ -42,11 +43,13 @@ func (p *Program) String() string {
 type Var struct {
 	Token token.Token
 	Pos   int
+	Ctype token.Ctype
 }
 
-func (i *Var) ExpressionNode()      {}
-func (i *Var) TokenLiteral() string { return i.Token.Literal }
-func (i *Var) String() string       { return i.Token.Literal }
+func (v *Var) ExpressionNode()       {}
+func (v *Var) TokenLiteral() string  { return v.Token.Literal }
+func (v *Var) String() string        { return v.Token.Literal }
+func (v *Var) GetCtype() token.Ctype { return v.Ctype }
 
 type ExpressionStatement struct {
 	Token      token.Token // 式の最初のトークン
@@ -68,33 +71,37 @@ type StringLiteral struct {
 	ID    int
 }
 
-func (sl *StringLiteral) ExpressionNode()      {}
-func (sl *StringLiteral) TokenLiteral() string { return sl.Token.Literal }
-func (sl *StringLiteral) String() string       { return "\"" + sl.Token.Literal + "\"" }
+func (sl *StringLiteral) ExpressionNode()       {}
+func (sl *StringLiteral) TokenLiteral() string  { return sl.Token.Literal }
+func (sl *StringLiteral) String() string        { return "\"" + sl.Token.Literal + "\"" }
+func (sl *StringLiteral) GetCtype() token.Ctype { return token.CTYPE_STR }
 
 type CharLiteral struct {
 	Token token.Token
 	Value rune
 }
 
-func (cl *CharLiteral) ExpressionNode()      {}
-func (cl *CharLiteral) TokenLiteral() string { return cl.Token.Literal }
-func (cl *CharLiteral) String() string       { return `'` + cl.Token.Literal + `'` }
+func (cl *CharLiteral) ExpressionNode()       {}
+func (cl *CharLiteral) TokenLiteral() string  { return cl.Token.Literal }
+func (cl *CharLiteral) String() string        { return `'` + cl.Token.Literal + `'` }
+func (cl *CharLiteral) GetCtype() token.Ctype { return token.CTYPE_CHAR }
 
 type IntegerLiteral struct {
 	Token token.Token
 	Value int64
 }
 
-func (il *IntegerLiteral) ExpressionNode()      {}
-func (il *IntegerLiteral) TokenLiteral() string { return il.Token.Literal }
-func (il *IntegerLiteral) String() string       { return il.Token.Literal }
+func (il *IntegerLiteral) ExpressionNode()       {}
+func (il *IntegerLiteral) TokenLiteral() string  { return il.Token.Literal }
+func (il *IntegerLiteral) String() string        { return il.Token.Literal }
+func (il *IntegerLiteral) GetCtype() token.Ctype { return token.CTYPE_INT }
 
 type InfixExpression struct {
 	Token    token.Token
 	Left     Expression
 	Operator string
 	Right    Expression
+	Ctype    token.Ctype
 }
 
 func (ie *InfixExpression) ExpressionNode()      {}
@@ -109,14 +116,15 @@ func (ie *InfixExpression) String() string {
 
 	return out.String()
 }
+func (ie *InfixExpression) GetCtype() token.Ctype { return ie.Ctype }
 
 // int a = 1;
 type DeclStatement struct {
 	Token token.Token
-	Ctype string
 	Name  *Var
 	Value Expression
 	Pos   int
+	Ctype token.Ctype
 }
 
 func (de *DeclStatement) statementNode()       {}
@@ -154,3 +162,4 @@ func (fe *FuncallExpression) String() string {
 
 	return out.String()
 }
+func (fe *FuncallExpression) GetCtype() token.Ctype { return token.CTYPE_INT } // TODO: とりあえず返り値がintしかないのでハードコーディング

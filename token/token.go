@@ -28,9 +28,11 @@ const (
 	RPAREN    = ")"
 )
 
+type Ctype int
+
 const (
-	CTYPE_VOID = "void"
-	CTYPE_INT  = "int"
-	CTYPE_CHAR = "char"
-	CTYPE_STR  = "string"
+	CTYPE_VOID Ctype = iota
+	CTYPE_INT
+	CTYPE_CHAR
+	CTYPE_STR
 )
