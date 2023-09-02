@@ -176,6 +176,7 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 }
 
 // int a = 1
+// TODO: 型宣言と値の型が一致しているかチェックする
 func (p *Parser) parseDeclStatement() *ast.DeclStatement {
 	declstmt := &ast.DeclStatement{Token: p.curToken}
 
@@ -271,11 +272,12 @@ func (p *Parser) parseIdent() ast.Expression {
 	var varctype token.Ctype
 	if !p.peekTokenIs(token.LPAREN) {
 		obj, ok := p.Env.Get(p.curToken.Literal)
-		if !ok {
+		if ok {
+			varctype = obj.GetCtype()
+		} else {
 			msg := fmt.Sprintf("not exist variable: %s", p.curToken.Literal)
 			p.errors = append(p.errors, msg)
 		}
-		varctype = obj.GetCtype()
 	}
 	// 前置関数と中置関数の仕組みで、処理しているトークンが関数呼び出しの場合はここの返り値は使われることがない
 	a := &ast.Var{Token: p.curToken, Ctype: varctype}
@@ -295,7 +297,7 @@ func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 
 	ctype, err := p.resultType(left, expression.Right)
 	if err != nil {
-		log.Fatalf("type error. left: %s, right: %s", left, expression.Right)
+		p.errors = append(p.errors, err.Error())
 	}
 	expression.Ctype = ctype
 
@@ -368,6 +370,10 @@ func (p *Parser) resultType(a ast.Expression, b ast.Expression) (token.Ctype, er
 	small := a
 	big := b
 	incompatibleErr := fmt.Errorf("incompatible operands: %s and %s for %c", p.curToken, small, big)
+
+	if a == nil || b == nil {
+		return token.CTYPE_VOID, incompatibleErr
+	}
 
 	if a.GetCtype() > b.GetCtype() {
 		small = b

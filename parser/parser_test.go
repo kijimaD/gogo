@@ -120,10 +120,10 @@ func TestParseProgramIllegal(t *testing.T) {
 		input string
 	}{
 		{`"unbalance quote`},
-		{`42a`}, // 数値から始まる識別子
-		// FIXME: panicになるので一旦コメントアウト
-		// {`1+`},  // 中置演算子の右側がない
-		// {`'MULTIPLE'`}, // charリテラルに複数の文字
+		{`42a`},        // 数値から始まる識別子
+		{`1+`},         // 中置演算子の右側がない
+		{`'MULTIPLE'`}, // charリテラルに複数の文字
+		{`1 + "a"`},    // 型エラー
 	}
 
 	for _, tt := range tests {
@@ -306,6 +306,26 @@ func TestParsePrecedence(t *testing.T) {
 
 		assert.Equal(t, tt.expect, actual)
 		assert.Equal(t, tt.expectLen, len(pg.Statements))
+	}
+}
+
+func TestParseTypeCheck(t *testing.T) {
+	tests := []struct {
+		input string
+	}{
+		{
+			`int a = 1; a + 1;`,
+		},
+		{
+			`char a = 'a'; a + 1;`,
+		},
+	}
+
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		p.ParseProgram()
+		checkParserErrors(t, p)
 	}
 }
 
