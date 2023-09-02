@@ -346,6 +346,8 @@ func (p *Parser) getDeclCtype() (token.Ctype, error) {
 	}
 
 	switch p.curToken.Literal {
+	case "void":
+		return token.CTYPE_VOID, nil
 	case "int":
 		return token.CTYPE_INT, nil
 	case "char":
@@ -353,17 +355,14 @@ func (p *Parser) getDeclCtype() (token.Ctype, error) {
 	case "string":
 		return token.CTYPE_STR, nil
 	default:
-		return token.CTYPE_VOID, nil
+		return token.CTYPE_VOID, fmt.Errorf("this is not type keyword: %s", p.curToken.Literal)
 	}
 }
 
 // 識別子が型か判定する
 func (p *Parser) isCtypeKeyword() bool {
-	ctype, err := p.getDeclCtype()
-	if err != nil {
-		log.Fatal(err)
-	}
-	return ctype != token.CTYPE_VOID
+	_, err := p.getDeclCtype()
+	return err == nil
 }
 
 func (p *Parser) resultType(a ast.Expression, b ast.Expression) (token.Ctype, error) {
