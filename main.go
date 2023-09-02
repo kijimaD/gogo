@@ -11,7 +11,6 @@ import (
 
 	"github.com/kijimaD/gogo/asm"
 	"github.com/kijimaD/gogo/lexer"
-	"github.com/kijimaD/gogo/object"
 	"github.com/kijimaD/gogo/parser"
 )
 
@@ -21,8 +20,6 @@ func main() {
 	for scanner.Scan() {
 		str = scanner.Text()
 	}
-
-	env := object.NewEnvironment()
 
 	l := lexer.New(str)
 	p := parser.New(l)
@@ -38,7 +35,7 @@ func main() {
 	fmt.Printf("mymain:\n\t")
 
 	for _, stmt := range prog.Statements {
-		asm.EmitStmt(env, stmt)
+		asm.EmitStmt(stmt)
 	}
 	fmt.Printf("ret\n")
 }

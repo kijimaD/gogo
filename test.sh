@@ -64,6 +64,8 @@ test 3 'int a = 2;a;3'
 test 4 'int a = 1+1; a+2'
 test 1 'int a = 1;a'
 test 2 'int a = 1;a+1'
+test 97 "char a = 'a';a"
+# test 98 "char a = 'a';a+1" # => なぜか2になる
 # test 3 'int a = 1;a+2' # => なぜか4になる
 # test 4 'int a = 1;a+3' # => なぜか6になる
 test 25 'sum2(20, 5);'
@@ -80,7 +82,7 @@ testfail "42a" # 引数として渡されるのは文字列としてのダブル
 testfail '42a' # 引数として渡されるのは文字列としてのダブルクォートを含まない 42a
 testfail '"abc'
 testfail '1+'
-# testfail '1+"abc"'
+testfail '1+"abc"'
 testfail 'a'
 
 rm -f gogo.out gogo.s

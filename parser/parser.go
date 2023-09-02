@@ -2,10 +2,12 @@ package parser
 
 import (
 	"fmt"
+	"log"
 	"strconv"
 
 	"github.com/kijimaD/gogo/ast"
 	"github.com/kijimaD/gogo/lexer"
+	"github.com/kijimaD/gogo/object"
 	"github.com/kijimaD/gogo/token"
 )
 
@@ -21,6 +23,7 @@ type Parser struct {
 
 	Strs   []string // 定義済みの文字列一覧。ラベルの定義に使う。スタックに入っているので、位置が必要
 	errors []string
+	Env    *object.Environment // パーサーから移動させたほうがいいかもしれない
 }
 
 func (p *Parser) Errors() []string {
@@ -60,6 +63,7 @@ func New(l *lexer.Lexer) *Parser {
 		l:      l,
 		Strs:   []string{},
 		errors: []string{},
+		Env:    object.NewEnvironment(),
 	}
 
 	p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
@@ -154,17 +158,9 @@ func (p *Parser) registerInfix(tokenType token.TokenType, fn infixParseFn) {
 // 文をパースする
 // 文は代入とか、ifの実行文とか(条件部分は式)、返り値がないもの
 func (p *Parser) parseStatement() ast.Statement {
-	switch p.curToken.Type {
-	case token.IDENT:
-		// TODO: 型をテーブルから参照する
-		if p.curToken.Literal == token.CTYPE_VOID ||
-			p.curToken.Literal == token.CTYPE_INT ||
-			p.curToken.Literal == token.CTYPE_CHAR ||
-			p.curToken.Literal == token.CTYPE_STR {
-			decl := p.parseDeclStatement()
-			if decl != nil {
-				return decl
-			}
+	if p.curToken.Type == token.IDENT && p.isCtypeKeyword() {
+		if decl := p.parseDeclStatement(); decl != nil {
+			return decl
 		}
 	}
 	return p.parseExpressionStatement()
@@ -180,22 +176,44 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 }
 
 // int a = 1
+// TODO: 型宣言と値の型が一致しているかチェックする
 func (p *Parser) parseDeclStatement() *ast.DeclStatement {
-	stmt := &ast.DeclStatement{Token: p.curToken}
+	declstmt := &ast.DeclStatement{Token: p.curToken}
+
+	ctype, err := p.getDeclCtype()
+	if err != nil {
+		p.errors = append(p.errors, "failed get ident type")
+	}
+	declstmt.Ctype = ctype
 
 	if !p.expectPeek(token.IDENT) {
 		return nil
 	}
 
-	stmt.Name = &ast.Identifier{Token: p.curToken}
+	declstmt.Name = &ast.Var{Token: p.curToken}
 
 	if !p.expectPeek(token.ASSIGN) {
 		return nil
 	}
 
 	p.nextToken()
-	stmt.Value = p.parseExpression(LOWEST)
-	return stmt
+	declstmt.Value = p.parseExpression(LOWEST)
+	declstmt.Pos = p.Env.VarPos
+
+	var obj object.Object
+	switch declstmt.Ctype {
+	case token.CTYPE_STR:
+		obj = &object.String{Value: p.curToken.Literal, Pos: p.Env.VarPos}
+	case token.CTYPE_CHAR:
+		parsed, _ := strconv.ParseInt(p.curToken.Literal, 10, 64)
+		obj = &object.Char{Value: parsed, Pos: p.Env.VarPos}
+	case token.CTYPE_INT:
+		parsed, _ := strconv.ParseInt(p.curToken.Literal, 10, 64)
+		obj = &object.Integer{Value: parsed, Pos: p.Env.VarPos}
+	}
+	p.Env.Set(declstmt.Name.Token.Literal, obj)
+
+	return declstmt
 }
 
 // 式をパースする。現在位置に対応したパース関数を適用してASTを返す
@@ -249,21 +267,39 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 	return lit
 }
 
+// token.identifierから、定義ずみ変数を探してvarにする
 func (p *Parser) parseIdent() ast.Expression {
-	ident := &ast.Identifier{Token: p.curToken}
-	return ident
+	var varctype token.Ctype
+	if !p.peekTokenIs(token.LPAREN) {
+		obj, ok := p.Env.Get(p.curToken.Literal)
+		if ok {
+			varctype = obj.GetCtype()
+		} else {
+			msg := fmt.Sprintf("not exist variable: %s", p.curToken.Literal)
+			p.errors = append(p.errors, msg)
+		}
+	}
+	// 前置関数と中置関数の仕組みで、処理しているトークンが関数呼び出しの場合はここの返り値は使われることがない
+	a := &ast.Var{Token: p.curToken, Ctype: varctype}
+	return a
 }
 
 func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 	expression := &ast.InfixExpression{
 		Token:    p.curToken, // 現在のトークンは中置演算子の演算子
-		Operator: p.curToken.Literal,
 		Left:     left,
+		Operator: p.curToken.Literal,
 	}
 
 	precedence := p.curPrecedence()
 	p.nextToken()                                    // 中置演算子の右の引数に進む
 	expression.Right = p.parseExpression(precedence) // 右側を評価する
+
+	ctype, err := p.resultType(left, expression.Right)
+	if err != nil {
+		p.errors = append(p.errors, err.Error())
+	}
+	expression.Ctype = ctype
 
 	return expression
 }
@@ -301,4 +337,76 @@ func (p *Parser) parseExpressionList(end token.TokenType) []ast.Expression {
 	}
 
 	return list
+}
+
+// 型宣言がどの型かを判定する
+func (p *Parser) getDeclCtype() (token.Ctype, error) {
+	if p.curToken.Type != token.IDENT {
+		return token.CTYPE_VOID, fmt.Errorf("%s is not ident", p.curToken.Type)
+	}
+
+	switch p.curToken.Literal {
+	case "void":
+		return token.CTYPE_VOID, nil
+	case "int":
+		return token.CTYPE_INT, nil
+	case "char":
+		return token.CTYPE_CHAR, nil
+	case "string":
+		return token.CTYPE_STR, nil
+	default:
+		return token.CTYPE_VOID, fmt.Errorf("this is not type keyword: %s", p.curToken.Literal)
+	}
+}
+
+// 識別子が型か判定する
+func (p *Parser) isCtypeKeyword() bool {
+	_, err := p.getDeclCtype()
+	return err == nil
+}
+
+func (p *Parser) resultType(a ast.Expression, b ast.Expression) (token.Ctype, error) {
+	small := a
+	big := b
+	incompatibleErr := fmt.Errorf("incompatible operands: %s and %s for %c", p.curToken, small, big)
+
+	if a == nil || b == nil {
+		return token.CTYPE_VOID, incompatibleErr
+	}
+
+	if a.GetCtype() > b.GetCtype() {
+		small = b
+		big = a
+	}
+
+	switch small.GetCtype() {
+	case token.CTYPE_VOID:
+		return token.CTYPE_VOID, incompatibleErr
+	case token.CTYPE_INT:
+		switch big.GetCtype() {
+		case token.CTYPE_INT:
+			return token.CTYPE_INT, nil
+		case token.CTYPE_CHAR:
+			return token.CTYPE_INT, nil
+		case token.CTYPE_STR:
+			return token.CTYPE_VOID, incompatibleErr
+		default:
+			log.Fatal("unknown type")
+		}
+	case token.CTYPE_CHAR:
+		switch big.GetCtype() {
+		case token.CTYPE_CHAR:
+			return token.CTYPE_INT, nil
+		case token.CTYPE_STR:
+			return token.CTYPE_VOID, incompatibleErr
+		default:
+			log.Fatal("unknown type")
+		}
+	case token.CTYPE_STR:
+		log.Fatal("unknown type")
+	default:
+		log.Fatal("unknown type")
+	}
+
+	return token.CTYPE_VOID, incompatibleErr
 }
