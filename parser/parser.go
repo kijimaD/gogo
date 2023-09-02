@@ -179,7 +179,7 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 func (p *Parser) parseDeclStatement() *ast.DeclStatement {
 	declstmt := &ast.DeclStatement{Token: p.curToken}
 
-	ctype, err := p.getCtype()
+	ctype, err := p.getDeclCtype()
 	if err != nil {
 		p.errors = append(p.errors, "failed get ident type")
 	}
@@ -326,7 +326,7 @@ func (p *Parser) parseExpressionList(end token.TokenType) []ast.Expression {
 }
 
 // 型宣言がどの型かを判定する
-func (p *Parser) getCtype() (token.Ctype, error) {
+func (p *Parser) getDeclCtype() (token.Ctype, error) {
 	if p.curToken.Type != token.IDENT {
 		return token.CTYPE_VOID, fmt.Errorf("%s is not ident", p.curToken.Type)
 	}
@@ -345,7 +345,7 @@ func (p *Parser) getCtype() (token.Ctype, error) {
 
 // 識別子が型か判定する
 func (p *Parser) isCtypeKeyword() bool {
-	ctype, err := p.getCtype()
+	ctype, err := p.getDeclCtype()
 	if err != nil {
 		log.Fatal(err)
 	}
