@@ -199,7 +199,17 @@ func (p *Parser) parseDeclStatement() *ast.DeclStatement {
 	declstmt.Value = p.parseExpression(LOWEST)
 	declstmt.Pos = p.Env.VarPos
 
-	obj := &object.String{Value: declstmt.Name.Token.Literal, Pos: p.Env.VarPos} // TODO: とりあえずstring。ctype型によって変える
+	var obj object.Object
+	switch declstmt.Ctype {
+	case token.CTYPE_STR:
+		obj = &object.String{Value: p.curToken.Literal, Pos: p.Env.VarPos}
+	case token.CTYPE_CHAR:
+		parsed, _ := strconv.ParseInt(p.curToken.Literal, 10, 64)
+		obj = &object.Char{Value: parsed, Pos: p.Env.VarPos}
+	case token.CTYPE_INT:
+		parsed, _ := strconv.ParseInt(p.curToken.Literal, 10, 64)
+		obj = &object.Integer{Value: parsed, Pos: p.Env.VarPos}
+	}
 	p.Env.Set(declstmt.Name.Token.Literal, obj)
 
 	return declstmt
@@ -256,17 +266,19 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 	return lit
 }
 
-// token.identifierをパースする。変数の場合は値が存在するかチェックする
+// token.identifierから、定義ずみ変数を探してvarにする
 func (p *Parser) parseIdent() ast.Expression {
+	var varctype token.Ctype
 	if !p.peekTokenIs(token.LPAREN) {
-		_, ok := p.Env.Get(p.curToken.Literal)
+		obj, ok := p.Env.Get(p.curToken.Literal)
 		if !ok {
 			msg := fmt.Sprintf("not exist variable: %s", p.curToken.Literal)
 			p.errors = append(p.errors, msg)
 		}
+		varctype = obj.GetCtype()
 	}
 	// 前置関数と中置関数の仕組みで、処理しているトークンが関数呼び出しの場合はここの返り値は使われることがない
-	a := &ast.Var{Token: p.curToken}
+	a := &ast.Var{Token: p.curToken, Ctype: varctype}
 	return a
 }
 
@@ -283,7 +295,7 @@ func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 
 	ctype, err := p.resultType(left, expression.Right)
 	if err != nil {
-		log.Fatal("type error")
+		log.Fatalf("type error. left: %s, right: %s", left, expression.Right)
 	}
 	expression.Ctype = ctype
 
