@@ -2,7 +2,6 @@ package parser
 
 import (
 	"fmt"
-	"log"
 	"strconv"
 
 	"github.com/kijimaD/gogo/ast"
@@ -390,8 +389,6 @@ func (p *Parser) resultType(a ast.Expression, b ast.Expression) (token.Ctype, er
 			return token.CTYPE_INT, nil
 		case token.CTYPE_STR:
 			return token.CTYPE_VOID, incompatibleErr
-		default:
-			log.Fatal("unknown type")
 		}
 	case token.CTYPE_CHAR:
 		switch big.GetCtype() {
@@ -399,13 +396,9 @@ func (p *Parser) resultType(a ast.Expression, b ast.Expression) (token.Ctype, er
 			return token.CTYPE_INT, nil
 		case token.CTYPE_STR:
 			return token.CTYPE_VOID, incompatibleErr
-		default:
-			log.Fatal("unknown type")
 		}
 	case token.CTYPE_STR:
-		log.Fatal("unknown type")
-	default:
-		log.Fatal("unknown type")
+		return token.CTYPE_VOID, incompatibleErr
 	}
 
 	return token.CTYPE_VOID, incompatibleErr
