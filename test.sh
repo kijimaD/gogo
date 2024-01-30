@@ -44,6 +44,7 @@ make -s gogo
 
 test 0 0
 test 42 42
+test 2 '1;2'
 test 3 '1+2'
 test 3 '1 + 2'
 test 3 '1+ 2'
@@ -59,6 +60,8 @@ test 8 '3+4/2+3'
 test 18 '3*4/2*3'
 test 3 '24/2/4'
 test 98 "'a'+1;"
+
+# Declaration
 test 2 'int a = 2;a;'
 test 3 'int a = 2;a;3'
 test 4 'int a = 1+1; a+2'
@@ -68,10 +71,11 @@ test 97 "char a = 'a';a"
 # test 98 "char a = 'a';a+1" # => なぜか2になる
 # test 3 'int a = 1;a+2' # => なぜか4になる
 # test 4 'int a = 1;a+3' # => なぜか6になる
+
+# Function call
 test 25 'sum2(20, 5);'
 test 24 'sum2(20-1, 5);'
 test 15 'sum5(1, 2, 3, 4, 5);'
-
 # FIXME: printf単独だと1がくっつくのはなぜ? そして後続の式でその数字が上書きされるのはなぜ
 test a1 'printf("%s", "a");'
 test a99 'printf("%s", "a");99;'
